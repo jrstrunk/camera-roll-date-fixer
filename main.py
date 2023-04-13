@@ -17,6 +17,8 @@ input_path = "input"
 output_path = "fixed"
 error_path = "error"
 duplicate_path = "duplicates"
+preferred_keyword_in_dups = "" # can be a dir name in the path or file extension
+unpreferred_keyword_in_dups = "" 
 get_date_from_sys_file_times = False # be careful!
 output_fixed_files_in_month_subdirs = True
 report_duplicated_files = True
@@ -127,5 +129,10 @@ if report_duplicated_files:
     if move_reported_duplicate_files and dups:
         print(datetime.now(), "Moving duplicate files ... ")
         fixer_util.create_directories(duplicate_path + "/d")
-        fixer_util.move_older_duplicates(dups, duplicate_path)
+        fixer_util.move_older_duplicates(
+            dups, 
+            duplicate_path, 
+            preferred_keyword_in_dups, 
+            unpreferred_keyword_in_dups
+        )
         print(datetime.now(), "Done!")

@@ -67,7 +67,11 @@ def generate_duplicate_report(start_path):
     print(datetime.now(), "Done!")
     return dups
 
-def move_older_duplicates(duplicate_tuples, dest_dir):
+def move_older_duplicates(
+        duplicate_tuples: list, 
+        dest_dir: str, 
+        preferred_keyword: str = "", 
+        unpreferred_keyword: str = ""):
     moved_files = []
 
     for duplicate_files in duplicate_tuples:
@@ -77,15 +81,23 @@ def move_older_duplicates(duplicate_tuples, dest_dir):
         # Find the file with the newest system modification date. If the files 
         # have the same date, prefer the file with the smallest file name to get
         # rid of common "(1)" or "- Copy" postfixes in file names. If the files
-        # have the same modificatin date and same filename length, then prefer
-        # the file with the least amound of digits at the end of the file. This
-        # will move files that an inrement added to their nonce in the output
-        # if this program.
-        def file_criteria(file):
-            mtime = os.path.getmtime(file)
-            name = os.path.basename(file)
+        # have the same modificatin date and same filename length, then prefer 
+        # files that have the passed preferred keywords in them, then prefer 
+        # files that don't have the unpreferred keyword in them. If all of those 
+        # conditions are the same, then prefer the file with the least amount of 
+        # digits at the end of the file. This will move files that an increment 
+        # added to their nonce in the output of this program.
+        def file_criteria(file_name: str):
+            mtime = os.path.getmtime(file_name)
+            name = os.path.basename(file_name)
             last_7_chars_digit_count = sum(c.isdigit() for c in name[-7:])
-            return (mtime, -len(name), -last_7_chars_digit_count)
+            return (
+                mtime, 
+                -len(name), 
+                preferred_keyword in file_name, 
+                not unpreferred_keyword in file_name, 
+                -last_7_chars_digit_count
+            )
 
         preferred_file = max(duplicate_files, key=file_criteria)
 
