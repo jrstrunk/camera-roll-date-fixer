@@ -15,24 +15,27 @@ def from_exif(file_name: str):
             and not ".jpeg" in file_name.lower():
         return None, False
 
-    with open(file_name, 'rb') as fi:
-        img = exif.Image(fi)
-
     try:
-        if img.datetime_original:
-            return datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S"), True
-    except:
-        pass
+        with open(file_name, 'rb') as fi:
+            img = exif.Image(fi)
 
-    try:
-        if img.datetime:
-            return datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
-    except:
-        pass
+        try:
+            if img.datetime_original:
+                return datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S"), True
+        except:
+            pass
 
-    try:
-        if img.datetime_digitized:
-            return datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+        try:
+            if img.datetime:
+                return datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+        except:
+            pass
+
+        try:
+            if img.datetime_digitized:
+                return datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+        except:
+            pass
     except:
         pass
 
