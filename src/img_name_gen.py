@@ -3,7 +3,7 @@ from datetime import datetime
 import exif
 import random
 import string
-from preserve_wordlist import words_to_preserve, words_to_not_preserve
+from .preserve_wordlist import words_to_preserve, words_to_not_preserve
 
 class ImgNameGen:
     def __init__(self):

@@ -1,16 +1,14 @@
 import exif
-from pprint import pprint
 from datetime import datetime
-import time
 import os
 import time
 from os import listdir
 from os.path import isfile, join
 import shutil
 import ffmpeg
-import determine_date
-import fixer_util
-from img_name_gen import ImgNameGen
+import src.determine_date as determine_date
+import src.fixer_util as fixer_util
+from src.img_name_gen import ImgNameGen
 
 # PROGRAM CONSTANTS
 earliest_year = "2000"

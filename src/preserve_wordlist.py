@@ -16,7 +16,7 @@ words_to_not_preserve = [
     "from",
 ]
 
-with open('words.txt') as word_file:
+with open('resources/words.txt') as word_file:
     valid_words = set(word_file.read().split())
 
 words_to_preserve = [
