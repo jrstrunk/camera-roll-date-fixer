@@ -121,13 +121,12 @@ for i, file_name in enumerate(files):
 
     time.sleep(0.01)
 
-print(datetime.now(), "Done to fixing file times!")
+print(datetime.now(), "Done fixing file times!")
 
 if report_duplicated_files:
     dups = fixer_util.generate_duplicate_report(output_path)
 
     if move_reported_duplicate_files and dups:
-        print(datetime.now(), "Moving duplicate files ... ")
         fixer_util.create_directories(duplicate_path + "/d")
         fixer_util.move_older_duplicates(
             dups, 
@@ -135,4 +134,3 @@ if report_duplicated_files:
             preferred_keyword_in_dups, 
             unpreferred_keyword_in_dups
         )
-        print(datetime.now(), "Done!")

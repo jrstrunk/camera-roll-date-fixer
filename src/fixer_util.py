@@ -72,6 +72,7 @@ def move_older_duplicates(
         dest_dir: str, 
         preferred_keyword: str = "", 
         unpreferred_keyword: str = ""):
+    print(datetime.now(), "Moving duplicate files ... ")
     moved_files = []
 
     for duplicate_files in duplicate_tuples:
@@ -111,6 +112,7 @@ def move_older_duplicates(
                 except (OSError, shutil.Error) as e:
                     pass
 
+    print(datetime.now(), "Done!")
     return moved_files
 
 def write_jpg_with_exif(
