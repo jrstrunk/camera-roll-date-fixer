@@ -51,7 +51,7 @@ class ImgNameGen:
             ".mkv": "_VID",
             ".mov": "_VID",
             ".webm": "_VID",
-            ".m4a": "_VID",
+            ".m4v": "_VID",
             ".mp3": "_AUD",
             ".m4a": "_AUD",
         }
@@ -60,7 +60,7 @@ class ImgNameGen:
             if val in img_filename.lower():
                 return prefix
         
-        return "UKN"
+        return "_UKN"
 
     def get_postfix(self, img_filename: str):
         # Do not waste time checking for words if it does not have more than 
