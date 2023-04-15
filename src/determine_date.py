@@ -8,7 +8,7 @@ from os.path import isfile, join
 import json
 import re
 import itertools
-import ffprobe
+from .ffprobe import FFProbe
 
 def from_exif(file_name: str):
     if not ".jpg" in file_name.lower() \
@@ -45,7 +45,7 @@ def from_video_metadata(file_name: str):
     metadata = {}
     try:
         # Use FFprobe to get metadata from the video file
-        probe = ffprobe.FFProbe(file_name)
+        probe = FFProbe(file_name)
 
         # Extract the metadata
         if probe.metadata.get("creation_time"):
