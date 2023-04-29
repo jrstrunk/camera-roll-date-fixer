@@ -23,6 +23,7 @@ get_date_from_sys_file_times = False # be careful!
 output_fixed_files_in_month_subdirs = True
 report_duplicated_files = True
 move_reported_duplicate_files = True
+local_timezone = "America/New_York"
 
 img_name_gen = ImgNameGen()
 
@@ -49,6 +50,10 @@ for i, file_name in enumerate(files):
     if not file_date:
         file_date, got_date_from_metadata = \
             determine_date.from_exif(input_file_name)
+
+    if not file_date:
+        file_date = \
+            determine_date.from_gphotos_json(input_file_name, local_timezone)
 
     if not file_date:
         file_date = determine_date.from_file_name(input_file_name)

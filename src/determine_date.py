@@ -1,6 +1,5 @@
 import exif
-from pprint import pprint
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import time
 from os import listdir
@@ -8,6 +7,9 @@ from os.path import isfile, join
 import json
 import re
 import itertools
+import json
+import pytz
+from dateutil import parser
 from .ffprobe import FFProbe
 
 def from_exif(file_name: str):
@@ -62,7 +64,7 @@ def from_video_metadata(file_name: str):
 
     return None, False
 
-def from_file_name(filename: str):
+def from_file_name(file_name: str):
     possible_date_formats = []
 
     delimiters = ["", " ", "-", "_", ".", " AT ", " at "]
@@ -114,7 +116,7 @@ def from_file_name(filename: str):
         })
 
     for date_format in possible_date_formats:
-        match = re.search(date_format["regex"], filename)
+        match = re.search(date_format["regex"], file_name)
         if match:
             try:
                 return datetime.strptime(match.group(0), date_format["format"])
@@ -125,8 +127,37 @@ def from_file_name(filename: str):
 
     return None
 
-def from_json(filename: str):
+def from_json(file_name: str):
     return None, None
+
+def from_gphotos_json(file_name: str, local_timezone: str):
+    data = None
+
+    try:
+        if os.path.isfile(f"{file_name}.json"):
+            with open(f"{file_name}.json") as fi:
+                data = json.load(fi)
+
+        # google photos names the json files a little differently than the 
+        # actual file in these circumstances
+        if "-edited" in file_name \
+                and os.path.isfile(f"{file_name.replace('-edited', '')}.json"):
+            with open(f"{file_name.replace('-edited', '')}.json") as fi:
+                data = json.load(fi)
+
+        elif "(1).jpg" in file_name \
+                and os.path.isfile(f"{file_name.replace('(1).jpg', '.jpg(1)')}.json"):
+            with open(f"{file_name.replace('(1).jpg', '.jpg(1)')}.json") as fi:
+                data = json.load(fi)
+    except:
+        pass
+
+    if data:
+        date_obj = parser.parse(data["photoTakenTime"]["formatted"])
+        local_timezone = pytz.timezone(local_timezone)
+        return date_obj.astimezone(local_timezone)
+
+    return None
 
 def from_sys_file_times(file_name: str):
     """This is dangerous!"""
