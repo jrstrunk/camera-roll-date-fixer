@@ -38,7 +38,7 @@ class ImgNameGen:
             return f"_{incr}" + "".join(random.choices(consonants, k=1))
         return f"_{incr}"
 
-    def get_prefix(self, img_filename: str):
+    def get_prefix(self, file_name: str):
         img_prefixes = {
             "pxl_": "_PXL",
             "mvimg": "_MVIMG",
@@ -56,8 +56,10 @@ class ImgNameGen:
             ".m4a": "_AUD",
         }
 
+        file_ext = file_name.split(".")[-1]
+
         for val, prefix in img_prefixes.items():
-            if val in img_filename.lower():
+            if val == file_ext.lower():
                 return prefix
         
         return "_UKN"
