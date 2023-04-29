@@ -133,24 +133,34 @@ def from_json(file_name: str):
 def from_gphotos_json(file_name: str, local_timezone: str):
     data = None
 
-    try:
-        if os.path.isfile(f"{file_name}.json"):
-            with open(f"{file_name}.json") as fi:
-                data = json.load(fi)
+    def get_json_data(file_name):
+        try:
+            file_path_split = file_name.split("/")
+            file_path_split[-1] = file_path_split[-1][0:46]
+            short_file_name = "/".join(file_path_split)
 
-        # google photos names the json files a little differently than the 
-        # actual file in these circumstances
-        if "-edited" in file_name \
-                and os.path.isfile(f"{file_name.replace('-edited', '')}.json"):
-            with open(f"{file_name.replace('-edited', '')}.json") as fi:
-                data = json.load(fi)
+            if os.path.isfile(f"{short_file_name}.json"):
+                with open(f"{short_file_name}.json") as fi:
+                    return json.load(fi)
 
-        elif "(1).jpg" in file_name \
-                and os.path.isfile(f"{file_name.replace('(1).jpg', '.jpg(1)')}.json"):
-            with open(f"{file_name.replace('(1).jpg', '.jpg(1)')}.json") as fi:
-                data = json.load(fi)
-    except:
-        pass
+            for num in range(5):
+                minus_num_file_name = \
+                    short_file_name.replace(f"({num})", "") + f"({num}).json"
+
+                if f"({num})" in file_name and os.path.isfile(minus_num_file_name):
+                    with open(minus_num_file_name) as fi:
+                        return json.load(fi)
+
+            # google photos names the json files a little differently than the 
+            # actual file in these circumstances
+            minus_edited_file_name = file_name.replace('-edited', '') + ".json"
+            if "-edited" in file_name and os.path.isfile(minus_edited_file_name):
+                with open(minus_edited_file_name) as fi:
+                    return json.load(fi)
+        except:
+            pass
+
+    data = get_json_data(file_name)
 
     if data:
         date_obj = parser.parse(data["photoTakenTime"]["formatted"])
