@@ -12,7 +12,7 @@ from src.img_name_gen import ImgNameGen
 
 # PROGRAM CONSTANTS
 earliest_year = "2000"
-lastest_year = "2023"
+latest_year = "2023"
 input_path = "input"
 output_path = "fixed"
 error_path = "error"
@@ -63,7 +63,7 @@ for i, file_name in enumerate(files):
 
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
-    if not fixer_util.is_within_years(file_date, earliest_year, lastest_year):
+    if not fixer_util.is_within_years(file_date, earliest_year, latest_year):
         shutil.copy2(input_file_name, error_file_name)
         print("Error!")
         continue
