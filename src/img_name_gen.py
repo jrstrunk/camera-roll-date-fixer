@@ -39,29 +39,35 @@ class ImgNameGen:
         return f"_{incr}"
 
     def get_prefix(self, file_name: str):
-        img_prefixes = {
+        img_prefixes_from_file_name = {
             "pxl_": "_PXL",
             "mvimg": "_MVIMG",
-            ".jpg": "_IMG",
-            ".jpeg": "_IMG",
-            ".png": "_IMG",
-            ".gif": "_IMG",
-            ".webp": "_IMG",
-            ".mp4": "_VID",
-            ".mkv": "_VID",
-            ".mov": "_VID",
-            ".webm": "_VID",
-            ".m4v": "_VID",
-            ".mp3": "_AUD",
-            ".m4a": "_AUD",
+        }
+        img_prefixes_from_file_ext = {
+            "jpg": "_IMG",
+            "jpeg": "_IMG",
+            "png": "_IMG",
+            "gif": "_IMG",
+            "webp": "_IMG",
+            "mp4": "_VID",
+            "mkv": "_VID",
+            "mov": "_VID",
+            "webm": "_VID",
+            "m4v": "_VID",
+            "mp3": "_AUD",
+            "m4a": "_AUD",
         }
 
         file_ext = file_name.split(".")[-1]
 
-        for val, prefix in img_prefixes.items():
+        for val, prefix in img_prefixes_from_file_name.items():
+            if val in file_name.lower():
+                return prefix
+
+        for val, prefix in img_prefixes_from_file_ext.items():
             if val == file_ext.lower():
                 return prefix
-        
+
         return "_UKN"
 
     def get_postfix(self, img_filename: str):
