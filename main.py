@@ -27,7 +27,7 @@ local_timezone = "America/New_York"
 
 img_name_gen = ImgNameGen()
 
-files = [f for f in listdir(input_path) if isfile(join(input_path, f))]
+files = [f for f in listdir(input_path) if isfile(join(input_path, f)) and not ".json" in f]
 
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
