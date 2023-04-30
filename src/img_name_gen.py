@@ -54,6 +54,7 @@ class ImgNameGen:
             "PXL_": "_PXL",
             "MVIMG": "_MVIMG",
             "WIN_": "_WIN",
+            "MVI_": "_MVI",
         }
         img_prefixes_from_file_ext = {
             "jpg": "_IMG",
