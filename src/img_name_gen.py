@@ -27,7 +27,7 @@ class ImgNameGen:
         return date_prefix_name \
             + self.get_nonce(date_prefix_name) \
             + self.get_postfix(file_name.replace(file_ext, "")) \
-            + file_name.replace("IMG", "")
+            + file_ext.lower()
 
     def get_date_str(self, img_date: datetime):
         return datetime.strftime(img_date, '%Y%m%d_%H%M%S')
