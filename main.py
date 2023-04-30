@@ -22,6 +22,8 @@ get_date_from_sys_file_times = False # be careful!
 output_fixed_files_in_month_subdirs = True
 report_duplicated_files = True
 move_reported_duplicate_files = True
+rename_files = True
+preserve_original_file_name = False
 local_timezone = "America/New_York"
 
 img_name_gen = ImgNameGen()
@@ -67,7 +69,9 @@ for i, file_name in enumerate(files):
         print("Error!")
         continue
 
-    new_file_name = img_name_gen.gen_image_name(file_name, file_date)
+    new_file_name = img_name_gen.gen_image_name(
+        file_name, file_date, preserve_original_file_name, rename_files)
+
     if output_fixed_files_in_month_subdirs:
         output_file_name = f"{output_path}/" \
             + f"{file_date.strftime('%Y')}/{file_date.strftime('%m')}/" \

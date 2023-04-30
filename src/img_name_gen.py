@@ -9,14 +9,25 @@ class ImgNameGen:
     def __init__(self):
         self.prev_filenames = []
 
-    def gen_image_name(self, img_filename: str, img_date: datetime):
-        file_ext = "." + img_filename.split(".")[-1]
-        date_prefix_name = self.get_date_str(img_date) \
-            + self.get_prefix(img_filename)
+    def gen_image_name(self, 
+            file_name: str, 
+            img_date: datetime, 
+            preserve_original_file_name: bool,
+            rename_files: bool):
+        file_ext = "." + file_name.split(".")[-1]
+        date_str = self.get_date_str(img_date)
+        date_prefix_name = date_str + self.get_prefix(file_name)
+
+        if not rename_files:
+            return file_name
+
+        if preserve_original_file_name:
+            return date_str + "_" + file_name
+
         return date_prefix_name \
             + self.get_nonce(date_prefix_name) \
-            + self.get_postfix(img_filename.replace(file_ext, "")) \
-            + file_ext.lower()
+            + self.get_postfix(file_name.replace(file_ext, "")) \
+            + file_name.replace("IMG", "")
 
     def get_date_str(self, img_date: datetime):
         return datetime.strftime(img_date, '%Y%m%d_%H%M%S')
