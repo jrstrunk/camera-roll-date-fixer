@@ -44,7 +44,7 @@ for i, file_name in enumerate(files):
 
     if not file_date:
         file_date, got_date_from_metadata = \
-            determine_date.from_video_metadata(input_file_name)
+            determine_date.from_video_metadata(input_file_name, local_timezone)
 
     if not file_date:
         file_date, got_date_from_metadata = \

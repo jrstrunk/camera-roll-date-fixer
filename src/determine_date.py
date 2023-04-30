@@ -45,18 +45,21 @@ def from_exif(file_name: str):
 
 def from_video_metadata(file_name: str):
     metadata = {}
+    local_timezone = pytz.timezone(local_timezone)
     try:
         # Use FFprobe to get metadata from the video file
         probe = FFProbe(file_name)
 
         # Extract the metadata
         if probe.metadata.get("creation_time"):
-            return datetime.strptime(probe.metadata["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ"), True
+            utc_time = datetime.strptime(probe.metadata["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ"), True
+            return utc_time.astimezone(local_timezone)
 
         for stream in probe.streams:
             creation_time = stream.__dict__.get("TAG:creation_time")
             if creation_time:
-                return datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ"), True
+                utc_time = datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ"), True
+                return utc_time.astimezone(local_timezone)
 
     except Exception as e:
         print(e)
