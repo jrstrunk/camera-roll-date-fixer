@@ -1,5 +1,6 @@
 import exif
 from datetime import datetime, timedelta
+from configparser import ConfigParser
 import os
 import time
 from os import listdir
@@ -43,9 +44,9 @@ def from_exif(file_name: str):
 
     return None, False
 
-def from_video_metadata(file_name: str, local_timezone: str):
+def from_video_metadata(file_name: str, config: ConfigParser):
+    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
     metadata = {}
-    local_timezone = pytz.timezone(local_timezone)
     try:
         # Use FFprobe to get metadata from the video file
         probe = FFProbe(file_name)
@@ -133,7 +134,7 @@ def from_file_name(file_name: str):
 def from_json(file_name: str):
     return None, None
 
-def from_gphotos_json(file_name: str, local_timezone: str):
+def from_gphotos_json(file_name: str, config: ConfigParser):
     data = None
 
     def get_json_data(file_name):
@@ -167,7 +168,7 @@ def from_gphotos_json(file_name: str, local_timezone: str):
 
     if data:
         date_obj = parser.parse(data["photoTakenTime"]["formatted"])
-        local_timezone = pytz.timezone(local_timezone)
+        local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
         return date_obj.astimezone(local_timezone)
 
     return None

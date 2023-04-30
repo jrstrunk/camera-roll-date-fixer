@@ -1,16 +1,17 @@
 from datetime import datetime
+from configparser import ConfigParser
 import hashlib
 import shutil
 import ffmpeg
 import os
 import exif
 
-def is_within_years(dt: datetime, year1: str, year2: str):
+def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
         return False
 
-    year1 = int(year1)
-    year2 = int(year2)
+    year1 = config.getint("settings", "earliest_year")
+    year2 = config.getint("settings", "latest_year")
     
     if year1 > year2:
         tmp = year1
@@ -68,12 +69,13 @@ def generate_duplicate_report(start_path):
     print(datetime.now(), "Done!")
     return dups
 
-def move_older_duplicates(
-        duplicate_tuples: list, 
-        dest_dir: str, 
-        preferred_keyword: str = "", 
-        unpreferred_keyword: str = ""):
+def move_older_duplicates(duplicate_tuples: list, config: ConfigParser):
     print(datetime.now(), "Moving duplicate files ... ")
+    dest_dir = config.get("settings", "duplicate_path")
+    preferred_keyword = config.get("settings", "preferred_keyword_in_dups")
+    unpreferred_keyword = config.get("settings", "unpreferred_keyword_in_dups")
+
+    create_directories(dest_dir + "/d")
     moved_files = []
 
     for duplicate_files in duplicate_tuples:

@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from configparser import ConfigParser
 import exif
 import random
 import string
@@ -12,16 +13,15 @@ class ImgNameGen:
     def gen_image_name(self, 
             file_name: str, 
             img_date: datetime, 
-            preserve_original_file_name: bool,
-            rename_files: bool):
+            config: ConfigParser):
         file_ext = "." + file_name.split(".")[-1]
         date_str = self.get_date_str(img_date)
         date_prefix_name = date_str + self.get_prefix(file_name)
 
-        if not rename_files:
+        if not config.getboolean("settings", "rename_files"):
             return file_name
 
-        if preserve_original_file_name:
+        if config.getboolean("settings", "preserve_original_file_name"):
             return date_str + "_" + file_name
 
         return date_prefix_name \

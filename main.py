@@ -8,23 +8,19 @@ import ffmpeg
 import src.determine_date as determine_date
 import src.fixer_util as fixer_util
 from src.img_name_gen import ImgNameGen
+from configparser import ConfigParser
 
-# PROGRAM CONSTANTS
-earliest_year = "2000"
-latest_year = "2023"
-input_path = "input"
-output_path = "fixed"
-error_path = "error"
-duplicate_path = "duplicates"
-preferred_keyword_in_dups = "" # can be a dir name in the path or file extension
-unpreferred_keyword_in_dups = "" 
-get_date_from_sys_file_times = False # be careful!
-output_fixed_files_in_month_subdirs = True
-report_duplicated_files = True
-move_reported_duplicate_files = True
-rename_files = True
-preserve_original_file_name = False
-local_timezone = "America/New_York"
+config = ConfigParser()
+config.read('config.ini')
+
+input_path = config.get("settings", "input_path")
+output_path = config.get("settings", "output_path")
+error_path = config.get("settings", "error_path")
+duplicate_path = config.get("settings", "duplicate_path")
+use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
+use_month_subdirs = config.getboolean("settings", "output_in_month_subdirs")
+report_dups = config.getboolean("settings", "report_duplicated_files")
+move_dups = config.getboolean("settings", "move_reported_duplicate_files")
 
 img_name_gen = ImgNameGen()
 
@@ -46,7 +42,7 @@ for i, file_name in enumerate(files):
 
     if not file_date:
         file_date, got_date_from_metadata = \
-            determine_date.from_video_metadata(input_file_name, local_timezone)
+            determine_date.from_video_metadata(input_file_name, config)
 
     if not file_date:
         file_date, got_date_from_metadata = \
@@ -54,25 +50,24 @@ for i, file_name in enumerate(files):
 
     if not file_date:
         file_date = \
-            determine_date.from_gphotos_json(input_file_name, local_timezone)
+            determine_date.from_gphotos_json(input_file_name, config)
 
     if not file_date:
         file_date = determine_date.from_file_name(input_file_name)
 
-    if not file_date and get_date_from_sys_file_times:
+    if not file_date and use_sys_date:
         file_date = determine_date.from_sys_file_times(input_file_name)
 
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
-    if not fixer_util.is_within_years(file_date, earliest_year, latest_year):
+    if not fixer_util.is_within_years(file_date, config):
         shutil.copy2(input_file_name, error_file_name)
         print("Error!")
         continue
 
-    new_file_name = img_name_gen.gen_image_name(
-        file_name, file_date, preserve_original_file_name, rename_files)
+    new_file_name = img_name_gen.gen_image_name(file_name, file_date, config)
 
-    if output_fixed_files_in_month_subdirs:
+    if use_month_subdirs:
         output_file_name = f"{output_path}/" \
             + f"{file_date.strftime('%Y')}/{file_date.strftime('%m')}/" \
             + f"{new_file_name}"
@@ -131,14 +126,8 @@ for i, file_name in enumerate(files):
 
 print(datetime.now(), "Done fixing file times!")
 
-if report_duplicated_files:
+if report_dups:
     dups = fixer_util.generate_duplicate_report(output_path)
 
-    if move_reported_duplicate_files and dups:
-        fixer_util.create_directories(duplicate_path + "/d")
-        fixer_util.move_older_duplicates(
-            dups, 
-            duplicate_path, 
-            preferred_keyword_in_dups, 
-            unpreferred_keyword_in_dups
-        )
+    if dups and move_dups:
+        fixer_util.move_older_duplicates(dups, config)
