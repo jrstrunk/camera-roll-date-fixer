@@ -43,7 +43,7 @@ def from_exif(file_name: str):
 
     return None, False
 
-def from_video_metadata(file_name: str):
+def from_video_metadata(file_name: str, local_timezone: str):
     metadata = {}
     local_timezone = pytz.timezone(local_timezone)
     try:
@@ -52,14 +52,14 @@ def from_video_metadata(file_name: str):
 
         # Extract the metadata
         if probe.metadata.get("creation_time"):
-            utc_time = datetime.strptime(probe.metadata["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ"), True
-            return utc_time.astimezone(local_timezone)
+            utc_time = datetime.strptime(probe.metadata["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.UTC)
+            return utc_time.astimezone(local_timezone), True
 
         for stream in probe.streams:
             creation_time = stream.__dict__.get("TAG:creation_time")
             if creation_time:
-                utc_time = datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ"), True
-                return utc_time.astimezone(local_timezone)
+                utc_time = datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.UTC)
+                return utc_time.astimezone(local_timezone), True
 
     except Exception as e:
         print(e)
