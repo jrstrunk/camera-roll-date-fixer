@@ -3,6 +3,7 @@ import hashlib
 import shutil
 import ffmpeg
 import os
+import exif
 
 def is_within_years(dt: datetime, year1: str, year2: str):
     if not dt: 
@@ -120,20 +121,20 @@ def write_jpg_with_exif(
         output_file_name: str, 
         img_datetime: datetime, 
         img_original_datetime: datetime = None):
-    img_datetime_str = file_date.strftime('%Y:%m:%d %H:%M:%S')
+    img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
     
     with open(input_file_name, 'rb') as fi:
         img = exif.Image(fi)
 
-    img.datetime = img_datetime
+    img.datetime = img_datetime_str
 
     if img_original_datetime:
         img.datetime_original = \
             original_file_date.strftime('%Y:%m:%d %H:%M:%S')
     else:
-        img.datetime_original = img_datetime
+        img.datetime_original = img_datetime_str
 
-    img.datetime_digitized = img_datetime
+    img.datetime_digitized = img_datetime_str
 
     with open(output_file_name, 'wb') as fi:
         fi.write(img.get_file())
