@@ -103,6 +103,7 @@ for i, file_name in enumerate(files):
                 input_file_name, 
                 output_file_name, 
                 file_date,
+                config,
             )
 
             successful_metadata_write = True

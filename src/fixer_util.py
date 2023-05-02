@@ -1,10 +1,11 @@
+import os
 from datetime import datetime
 from configparser import ConfigParser
 import hashlib
 import shutil
 import ffmpeg
-import os
 import exif
+import pytz
 
 def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
@@ -144,28 +145,30 @@ def write_jpg_with_exif(
 def write_video_with_metadata(
         input_file_name: str, 
         output_file_name: str, 
-        video_date: dict):
-    video_datetime_str = file_date.strftime('%Y:%m:%d %H:%M:%S')
-    metadata = {
-        "comment": f"created: {video_datetime_str}"
-    }
+        video_date: datetime,
+        config: ConfigParser):
+    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
+    video_datetime_localized = local_timezone.localize(video_date)
+    video_datetime_utc = video_datetime_localized.astimezone(pytz.UTC)
 
+    # Parse the video_datetime_utc into a formatted string
+    creation_time = video_datetime_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    
     # Create a FFmpeg input stream
-    video_input = ffmpeg.input(input_file_name)
+    input_stream = ffmpeg.input(input_file_name)
 
-    # Create a list of metadata arguments
-    metadata_args = []
-    for key, value in metadata.items():
-        metadata_args.extend(["-metadata", f"{key}={value}"])
-
-    # Add metadata to the video stream
-    video_output = video_input.output(
-        output_file_name, 
-        **{"map_metadata": -1, "codec": "copy", "metadata": metadata_args}
+    # Create an FFmpeg output stream with the updated creation_date metadata
+    output_stream = ffmpeg.output(
+        input_stream,
+        output_file_name,
+        **{
+            "metadata": f"creation_time={creation_time}",
+            "c": "copy",
+        }
     )
 
     # Run the FFmpeg command
-    ffmpeg.run(video_output)
+    ffmpeg.run(output_stream, quiet=True)
 
 if __name__ == "__main__":
     dups = generate_duplicate_report('/home/john/Pictures/AddToJessicaNC')
