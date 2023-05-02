@@ -92,6 +92,7 @@ class ImgNameGen:
             .replace("IMG_", "")\
             .replace("MVIMG", "")\
             .replace("VID_", "")\
+            .replace("WIN_", "")\
             .replace("PXL_", "")
         if not bool(re.search("[a-zA-Z]{3,}", cleaned_file_name)):
             return ""
@@ -99,7 +100,7 @@ class ImgNameGen:
         # find all valid words in the filename and add them to the infix words
         # list
         postfix_words = []
-        mut_img_filename = img_filename.lower()
+        mut_img_filename = cleaned_file_name.lower()
 
         for word in words_to_not_preserve:
             mut_img_filename = mut_img_filename.replace(word, "")
@@ -111,7 +112,7 @@ class ImgNameGen:
 
         # create an infix that consists of each word in the infix word list
         # in its original order and in camel case
-        word_indices = {word: img_filename.lower().find(word) for word in postfix_words}
+        word_indices = {word: cleaned_file_name.lower().find(word) for word in postfix_words}
         sorted_infix_words = sorted(postfix_words, key=lambda x: word_indices[x])
 
         postfix = "".join([w.capitalize() for w in sorted_infix_words])
