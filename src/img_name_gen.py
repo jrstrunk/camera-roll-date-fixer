@@ -67,6 +67,9 @@ class ImgNameGen:
             "mov": "_VID",
             "webm": "_VID",
             "m4v": "_VID",
+            "avi": "_VID",
+            "3gp": "_VID",
+            "mpeg": "_VID",
             "mp3": "_AUD",
             "m4a": "_AUD",
         }
