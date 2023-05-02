@@ -5,10 +5,11 @@ from os import listdir
 from os.path import isfile, join
 import shutil
 import ffmpeg
+from configparser import ConfigParser
 import src.determine_date as determine_date
 import src.fixer_util as fixer_util
 from src.img_name_gen import ImgNameGen
-from configparser import ConfigParser
+import src.duplicates as duplicates
 
 config = ConfigParser()
 config.read('config.ini')
@@ -21,10 +22,14 @@ use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
 use_month_subdirs = config.getboolean("settings", "output_in_month_subdirs")
 report_dups = config.getboolean("settings", "report_duplicated_files")
 move_dups = config.getboolean("settings", "move_reported_duplicate_files")
+only_dedup = config.getboolean("settings", "only_dedup")
 
 img_name_gen = ImgNameGen()
 
-files = [f for f in listdir(input_path) if isfile(join(input_path, f)) and not ".json" in f]
+files = [
+    f for f in listdir(input_path) 
+        if isfile(join(input_path, f)) and not ".json" in f
+] if not only_dedup else []
 
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
@@ -128,7 +133,7 @@ for i, file_name in enumerate(files):
 print(datetime.now(), "Done fixing file times!")
 
 if report_dups:
-    dups = fixer_util.generate_duplicate_report(output_path)
+    dups = duplicates.generate_report(output_path, config)
 
     if dups and move_dups:
-        fixer_util.move_older_duplicates(dups, config)
+        duplicates.move_older(dups, config)

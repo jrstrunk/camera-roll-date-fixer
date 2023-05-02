@@ -1,5 +1,6 @@
 # Camera Roll Date Fixer
 
 ## Dependencies 
-- ffmpeg
-- ffprobe
+- ffmpeg-python
+- pillow
+- opencv-python
