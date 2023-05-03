@@ -7,9 +7,10 @@ import numpy as np
 import cv2
 from datetime import datetime
 from configparser import ConfigParser
-from .fixer_util import create_directories
+from . import fixer_util
+from .ffprobe import FFProbe
 
-def __generate_file_hash(file_path):
+def __generate_file_hash(file_path: str):
     BUF_SIZE = 65536
     hasher = hashlib.sha256()
     
@@ -22,108 +23,155 @@ def __generate_file_hash(file_path):
             
     return hasher.hexdigest()
 
-def __file_hashes_are_identical(file1_path, file2_path):
-    if __generate_file_hash(file1_path) == __generate_file_hash(file2_path):
-        return True
-    return False
-
-def __images_are_identical(img1_path, img2_path):
+def __generate_image_hash(file_path: str):
     try:
-        img1 = Image.open(img1_path)
+        # Open the image file
+        img = Image.open(file_path)
+        
+        # Create a hash object using the SHA256 algorithm
+        hash_obj = hashlib.sha256()
+        
+        # Get the pixel data of the image and update the hash object
+        pixel_data = img.tobytes()
+        hash_obj.update(pixel_data)
+        
+        # Get the hexadecimal digest of the hash object
+        img_hash = hash_obj.hexdigest()
+        
+        return img_hash
+    except IOError:
+        return None
+
+def __generate_video_shape(file_path: str):
+    video_shape = ""
+
+    try:
+        metadata = FFProbe(file_path)
+
+        video_streams = [s for s in metadata.streams if s.is_video()]
+        if not video_streams:
+            return None
+
+        video_stream = video_streams[0]
+
+        video_shape += str(video_stream.frames())
+        video_shape += video_stream.width
+        video_shape += video_stream.height
+
+        return video_shape
     except Exception as e:
-        return False
+        print(f"An error occurred while generating a video shape: {str(e)}")
+        return None
 
+def __generate_video_hash(file_path: str):
     try:
-        img2 = Image.open(img2_path)
+        # Open the video file
+        video = cv2.VideoCapture(file_path)
+
+        # Create a hash object using the SHA256 algorithm
+        hash_obj = hashlib.sha256()
+
+        # Read and process the frames
+        while True:
+            ret, frame = video.read()
+
+            # Break the loop if we have reached the end of the video
+            if not ret:
+                break
+
+            # Get the pixel data of the frame and update the hash object
+            pixel_data = frame.tobytes()
+            hash_obj.update(pixel_data)
+
+        # Release the video file
+        video.release()
+
+        # Get the hexadecimal digest of the hash object
+        video_hash_value = hash_obj.hexdigest()
+
+        return video_hash_value
     except Exception as e:
-        return False
+        print(f"An error occurred while generating a video hash: {str(e)}")
+        return None
 
-    try:
-        return np.array_equal(img1, img2)
-    except:
-        return False
-
-def __videos_are_identical(vid1_path, vid2_path):
-    video_extensions = ["mp4", "avi", "mkv", "mov", "webm", "m4v", "3gp", "mpeg"]
-    ext1 = vid1_path.split(".")[-1]
+def __find_duplicate_files(*paths, heavy=True):
+    file_hashes = {}
+    video_shapes = {}
     
-    if not ext1 in video_extensions:
-        return False
-    
-    ext2 = vid2_path.split(".")[-1]
-
-    if not ext2 in video_extensions:
-        return False
-
-    if not ext1 == ext2:
-        return False
-
-    vid1 = cv2.VideoCapture(vid1_path)
-    vid2 = cv2.VideoCapture(vid2_path)
-
-    if not vid1.isOpened() or not vid2.isOpened():
-        return False
-
-    if vid1.get(cv2.CAP_PROP_FRAME_COUNT) != vid2.get(cv2.CAP_PROP_FRAME_COUNT):
-        return False
-
-    if vid1.get(cv2.CAP_PROP_FRAME_WIDTH) != vid2.get(cv2.CAP_PROP_FRAME_WIDTH):
-        return False
-
-    if vid1.get(cv2.CAP_PROP_FRAME_HEIGHT) != vid2.get(cv2.CAP_PROP_FRAME_HEIGHT):
-        return False
-
-    while True:
-        ret1, frame1 = vid1.read()
-        ret2, frame2 = vid2.read()
-
-        if not ret1 or not ret2:
-            break
-
-        if not np.array_equal(frame1, frame2):
-            vid1.release()
-            vid2.release()
-            return False
-
-    vid1.release()
-    vid2.release()
-    return True
-
-def __find_duplicate_files(*file_paths, heavy=True):
-    all_files = []
-
-    for file_path in file_paths:
-        for root, dirs, files in os.walk(file_path):
+    for path in paths:
+        for root, _, files in os.walk(path):
             for file in files:
-                all_files.append(os.path.join(root, file))
+                file_path = os.path.join(root, file)
+                file_type = fixer_util.guess_media_type(file)
+                file_hash = None
+                video_shape = None
 
-    identical_file_groups = []
+                try:
+                    # try to get a hash of the image content
+                    if file_type == "image":
+                        file_hash = __generate_image_hash(file_path)
+                        
+                        # if no img hash could be generated, maybe it is a 
+                        # mis-labeled video so try to get the file's video shape 
+                        if not file_hash:
+                            video_shape = __generate_video_shape(file_path)
 
-    for file1, file2 in combinations(all_files, 2):
-        if __file_hashes_are_identical(file1, file2) or (
-            heavy and
-                (__images_are_identical(file1, file2) or
-                __videos_are_identical(file1, file2))):
+                    # try to get a shape of the video centent
+                    if file_type == "video":
+                        video_shape = __generate_video_shape(file_path)
+                        
+                        # if no video shape could be generated, maybe it is a 
+                        # mis-labeled image so try to get the file's image 
+                        # content hash
+                        if not video_shape:
+                            file_hash = __generate_image_hash(file_path)
+
+                    # if no video shape or image hash was found, we dunno what 
+                    # the heck this file is, so just take a hash of the whole 
+                    # thing
+                    if not file_hash and not video_shape:
+                        file_hash = __generate_file_hash(file_path)
+
+                except OSError as e:
+                    continue
+                
+                # add the img or file hash to the list of hashes
+                if file_hash in file_hashes:
+                    file_hashes[file_hash].append(file_path)
+                elif file_hash:
+                    file_hashes[file_hash] = [file_path]
+                
+                # add the video shape to the list of video shapes
+                if video_shape in video_shapes:
+                    video_shapes[video_shape].append(file_path)
+                elif video_shape:
+                    video_shapes[video_shape] = [file_path]
+
+    similiar_video_groups = [tuple(videos) for videos in video_shapes.values() if len(videos) > 1]
+
+    # since video shape is not a good measure of uniqueness, hash all videos
+    # with the same shape
+    video_hashes = {}
+
+    for video_group in similiar_video_groups:
+        for file_path in video_group:
+            video_hash = None
+
+            try:
+                video_hash = __generate_video_hash(file_path)
+            except OSError as e:
+                continue
             
-            # Check if either file is already in a group
-            found_group = None
-            for group in identical_file_groups:
-                if file1 in group or file2 in group:
-                    found_group = group
-                    break
-            
-            if found_group:
-                # Add both files to the found group
-                found_group.add(file1)
-                found_group.add(file2)
-            else:
-                # Create a new group with both files
-                identical_file_groups.append({file1, file2})
+            # add the video hash to the list of hashes
+            if video_hash in video_hashes:
+                video_hashes[video_hash].append(file_path)
+            elif video_hash:
+                video_hashes[video_hash] = [file_path]
+                    
+    duplicate_videos = [tuple(videos) for videos in video_hashes.values() if len(videos) > 1]
+    duplicate_images = [tuple(files) for files in file_hashes.values() if len(files) > 1]
 
-    # Convert sets to tuples
-    identical_files = [tuple(group) for group in identical_file_groups]
-
-    return identical_files
+    return duplicate_images + duplicate_videos
 
 def generate_report(start_path, config: ConfigParser):
     print(datetime.now(), "Generating duplicate file report ... ")
@@ -141,7 +189,7 @@ def move_older(duplicate_tuples: list, config: ConfigParser):
     preferred_keyword = config.get("settings", "preferred_keyword_in_dups")
     unpreferred_keyword = config.get("settings", "unpreferred_keyword_in_dups")
 
-    create_directories(dest_dir + "/d")
+    fixer_util.create_directories(dest_dir + "/d")
     moved_files = []
 
     for duplicate_files in duplicate_tuples:

@@ -127,3 +127,14 @@ def write_video_with_metadata(
 
     # Run the FFmpeg command
     ffmpeg.run(output_stream, quiet=True)
+
+def guess_media_type(file_name: str):
+    file_ext = file_name.split(".")[-1].lower()
+
+    if file_ext in image_extensions:
+        return "image"
+    if file_ext in video_extensions:
+        return "video"
+    if file_ext in audio_extensions:
+        return "audio"
+    return "unknown"
