@@ -5,6 +5,7 @@ import exif
 import random
 import string
 from .preserve_wordlist import words_to_preserve, words_to_not_preserve
+from . import fixer_util 
 
 class ImgNameGen:
     def __init__(self):
@@ -56,33 +57,21 @@ class ImgNameGen:
             "WIN_": "_WIN",
             "MVI_": "_MVI",
         }
-        img_prefixes_from_file_ext = {
-            "jpg": "_IMG",
-            "jpeg": "_IMG",
-            "png": "_IMG",
-            "gif": "_IMG",
-            "webp": "_IMG",
-            "mp4": "_VID",
-            "mkv": "_VID",
-            "mov": "_VID",
-            "webm": "_VID",
-            "m4v": "_VID",
-            "avi": "_VID",
-            "3gp": "_VID",
-            "mpeg": "_VID",
-            "mp3": "_AUD",
-            "m4a": "_AUD",
-        }
 
-        file_ext = file_name.split(".")[-1]
+        file_ext = file_name.split(".")[-1].lower()
 
         for val, prefix in img_prefixes_from_file_name.items():
             if val in file_name.upper():
                 return prefix
 
-        for val, prefix in img_prefixes_from_file_ext.items():
-            if val == file_ext.lower():
-                return prefix
+        if file_ext in fixer_util.image_extensions:
+            return "_IMG"
+        
+        if file_ext in fixer_util.video_extensions:
+            return "_VID"
+        
+        if file_ext in fixer_util.audio_extensions:
+            return "_AUD"
 
         return "_UKN"
 

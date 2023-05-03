@@ -7,6 +7,56 @@ import ffmpeg
 import exif
 import pytz
 
+video_extensions = [
+    "mp4", 
+    "avi", 
+    "mkv", 
+    "mov", 
+    "webm", 
+    "m4v", 
+    "3gp", 
+    "mpeg",
+]
+
+image_extensions = [
+    "jpg", 
+    "jpeg", 
+    "jpe",
+    "jif",
+    "jfif",
+    "jfi",
+    "jp2",
+    "j2k",
+    "jpf",
+    "jpx",
+    "jpm",
+    "mj2",
+    "png", 
+    "webp", 
+    "gif", 
+    "tiff", 
+    "tif", 
+    "psd", 
+    "raw", 
+    "arw", 
+    "cr2", 
+    "nrw", 
+    "k25", 
+    "bmp", 
+    "dib", 
+    "heif", 
+    "heic", 
+    "ind",
+    "indd",
+    "indt",
+]
+
+audio_extensions = [
+    "mp3",
+    "wav",
+    "m4a",
+]
+
 def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
         return False
