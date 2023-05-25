@@ -173,6 +173,14 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
 
     return None
 
+def from_user_override(config: ConfigParser):
+    user_override = config.get("settings", "manual_file_date_override")
+    if not user_override:
+        return
+    date_obj = parser.isoparse(user_override)
+    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
+    return date_obj.astimezone(local_timezone)
+
 def from_sys_file_times(file_name: str):
     """This is dangerous!"""
     # get the file modified date

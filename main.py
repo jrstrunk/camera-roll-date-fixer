@@ -43,7 +43,11 @@ for i, file_name in enumerate(files):
     print(i, file_name, "->", end=" ")
     got_date_from_metadata = False
 
-    file_date, original_file_date = determine_date.from_json(input_file_name)
+    file_date = determine_date.from_user_override(config)
+
+    if not file_date:
+        file_date, original_file_date = \
+            determine_date.from_json(input_file_name)
 
     if not file_date:
         file_date, got_date_from_metadata = \
