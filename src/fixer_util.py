@@ -16,6 +16,7 @@ video_extensions = [
     "m4v", 
     "3gp", 
     "mpeg",
+    "mp",
 ]
 
 image_extensions = [
