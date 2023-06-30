@@ -34,10 +34,13 @@ class ImgNameGen:
         return datetime.strftime(img_date, '%Y%m%d_%H%M%S')
 
     def get_nonce(self, img_filename: str):
-        """This assures that no two filenames collide by keeping track of all 
-            previous file names. If there could be a collision from two files 
-            having the same date, a number is incremented and put in the random 
-            postfix so that a collision in files names is not possible"""
+        """This adds an random postfix value to the filename to reduce the 
+            chance that files generated will collide with other external 
+            files when merged into the same directory and assures that no 
+            two filenames in the current process collide by keeping track 
+            of all previously generated file names. If there could be a 
+            collision, a number is incremented and put in the nonce so that 
+            a collision in files names is not possible"""
         incr = len([d for d in self.prev_filenames if d == img_filename])
 
         self.prev_filenames.append(img_filename)
