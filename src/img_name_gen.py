@@ -53,9 +53,11 @@ class ImgNameGen:
     def get_prefix(self, file_name: str):
         img_prefixes_from_file_name = {
             "PXL_": "_PXL",
-            "MVIMG": "_MVIMG",
             "WIN_": "_WIN",
+            "MVIMG": "_MVIMG",
             "MVI_": "_MVI",
+            ".MP": "_MPVID",
+            ".MP.JPG": "_MPIMG",
         }
 
         file_ext = file_name.split(".")[-1].lower()
