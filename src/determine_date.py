@@ -1,4 +1,5 @@
 import exif
+import PIL
 from datetime import datetime, timedelta
 from configparser import ConfigParser
 import os
@@ -13,34 +14,39 @@ import pytz
 from dateutil import parser
 from .ffprobe import FFProbe
 
-def from_exif(file_name: str):
-    if not ".jpg" in file_name.lower() \
-            and not ".jpeg" in file_name.lower():
-        return None, False
-
-    try:
-        with open(file_name, 'rb') as fi:
-            img = exif.Image(fi)
-
+def from_photo_metadata(file_name: str):
+    if ".jpg" in file_name.lower() \
+            or ".jpeg" in file_name.lower():
         try:
-            if img.datetime_original:
-                return datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S"), True
+            with open(file_name, 'rb') as fi:
+                img = exif.Image(fi)
+
+            try:
+                if img.datetime_original:
+                    return datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S"), True
+            except:
+                pass
+
+            try:
+                if img.datetime:
+                    return datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+            except:
+                pass
+
+            try:
+                if img.datetime_digitized:
+                    return datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+            except:
+                pass
         except:
             pass
 
+    elif ".png" in file_name.lower():
         try:
-            if img.datetime:
-                return datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+            img = PIL.Image.open(file_name)
+            return datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S"), True
         except:
             pass
-
-        try:
-            if img.datetime_digitized:
-                return datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
-        except:
-            pass
-    except:
-        pass
 
     return None, False
 

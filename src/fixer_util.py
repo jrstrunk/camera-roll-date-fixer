@@ -6,6 +6,7 @@ import shutil
 import ffmpeg
 import exif
 import pytz
+import PIL
 
 video_extensions = [
     "mp4", 
@@ -100,6 +101,23 @@ def write_jpg_with_exif(
 
     with open(output_file_name, 'wb') as fi:
         fi.write(img.get_file())
+
+def write_png_with_metadata(
+    input_file_name: str,
+    output_file_name: str,
+    img_datetime: datetime):
+    image = PIL.Image.open(input_file_name)
+
+    # Create a PngInfo object to store metadata
+    metadata = PIL.PngImagePlugin.PngInfo()
+
+    for key in image.info:
+        metadata.add_text(key, image.info[key])
+    
+    img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
+    metadata.add_text("Creation Time", img_datetime_str)
+    
+    image.save(output_file_name, "PNG", pnginfo=metadata)
 
 def write_video_with_metadata(
         input_file_name: str, 

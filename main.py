@@ -55,7 +55,7 @@ for i, file_name in enumerate(files):
 
     if not file_date:
         file_date, got_date_from_metadata = \
-            determine_date.from_exif(input_file_name)
+            determine_date.from_photo_metadata(input_file_name)
 
     if not file_date:
         file_date = \
@@ -87,38 +87,53 @@ for i, file_name in enumerate(files):
     # write the date to the exif data if it is a jpg file and the date did not
     # originally come from the exif data
     successful_metadata_write = False
-    if not got_date_from_metadata and (".jpg" in input_file_name.lower()
-            or ".jpeg" in input_file_name.lower()):
-        try:
-            fixer_util.write_jpg_with_exif(
-                input_file_name, 
-                output_file_name, 
-                file_date, 
-                original_file_date
-            )
+    if not got_date_from_metadata:
+        if ".jpg" in input_file_name.lower() \
+                or ".jpeg" in input_file_name.lower():
+            try:
+                fixer_util.write_jpg_with_exif(
+                    input_file_name, 
+                    output_file_name, 
+                    file_date, 
+                    original_file_date
+                )
 
-            successful_metadata_write = True
+                successful_metadata_write = True
 
-        except:
-            pass
+            except:
+                pass
 
-    elif not got_date_from_metadata and (".mp4" in input_file_name.lower() \
-            or ".mkv" in input_file_name.lower() \
-            or ".webm" in input_file_name.lower() \
-            or ".m4a" in input_file_name.lower() \
-            or ".mov" in input_file_name.lower()):
-        try:
-            fixer_util.write_video_with_metadata(
-                input_file_name, 
-                output_file_name, 
-                file_date,
-                config,
-            )
+        elif ".png" in input_file_name.lower():
+            try:
+                fixer_util.write_png_with_metadata(
+                    input_file_name, 
+                    output_file_name, 
+                    file_date, 
+                )
 
-            successful_metadata_write = True
+                successful_metadata_write = True
 
-        except:
-            pass
+            except Exception as e:
+                print(e)
+                pass
+
+        elif ".mp4" in input_file_name.lower() \
+                or ".mkv" in input_file_name.lower() \
+                or ".webm" in input_file_name.lower() \
+                or ".m4a" in input_file_name.lower() \
+                or ".mov" in input_file_name.lower():
+            try:
+                fixer_util.write_video_with_metadata(
+                    input_file_name, 
+                    output_file_name, 
+                    file_date,
+                    config,
+                )
+
+                successful_metadata_write = True
+
+            except:
+                pass
 
     # copy the file to the output file if a new file was not 
     # written with metadata 
