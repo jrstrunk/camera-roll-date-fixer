@@ -19,6 +19,10 @@ output_path = config.get("settings", "output_path")
 error_path = config.get("settings", "error_path")
 duplicate_path = config.get("settings", "duplicate_path")
 use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
+use_json_date = config.getboolean("settings", "get_date_from_json_file")
+use_metadata_date = config.getboolean("settings", "get_date_from_file_metadata")
+use_gphotos_json_date = config.getboolean("settings", "get_date_from_gphotos_json_file")
+use_file_name_date = config.getboolean("settings", "get_date_from_file_name")
 use_month_subdirs = config.getboolean("settings", "output_in_month_subdirs")
 report_dups = config.getboolean("settings", "report_duplicated_files")
 move_dups = config.getboolean("settings", "move_reported_duplicate_files")
@@ -45,19 +49,19 @@ for i, file_name in enumerate(files):
 
     file_date = determine_date.from_user_override(config)
 
-    if not file_date:
+    if not file_date and use_json_date:
         file_date, original_file_date = \
             determine_date.from_json(input_file_name)
 
-    if not file_date:
+    if not file_date and use_metadata_date:
         file_date, got_date_from_metadata = \
             determine_date.from_metadata(input_file_name, config)
 
-    if not file_date:
+    if not file_date and use_gphotos_json_date:
         file_date = \
             determine_date.from_gphotos_json(input_file_name, config)
 
-    if not file_date:
+    if not file_date and use_file_name_date:
         file_date = determine_date.from_file_name(input_file_name)
 
     if not file_date and use_sys_date:
