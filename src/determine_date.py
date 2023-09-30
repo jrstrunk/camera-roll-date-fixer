@@ -14,6 +14,12 @@ import pytz
 from dateutil import parser
 from .ffprobe import FFProbe
 
+def from_metadata(file_name: str, config: ConfigParser):
+    file_date, got_date = from_video_metadata(file_name, config)
+    if not got_date:
+        file_date, got_date = from_photo_metadata(file_name)
+    return file_date, got_date
+
 def from_photo_metadata(file_name: str):
     if ".jpg" in file_name.lower() \
             or ".jpeg" in file_name.lower():
