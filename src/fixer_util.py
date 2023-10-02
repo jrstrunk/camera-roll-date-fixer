@@ -5,6 +5,7 @@ import hashlib
 import shutil
 import ffmpeg
 import exif
+import piexif
 import pytz
 import PIL
 
@@ -79,73 +80,104 @@ def create_directories(file_path: str):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
+def get_utc_offset(localized_datetime: datetime) -> str:
+    return localized_datetime.isoformat()[-6:]
+
 def write_jpg_with_exif(
         input_file_name: str, 
         output_file_name: str, 
         img_datetime: datetime, 
-        img_original_datetime: datetime = None):
-    img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
-    
-    with open(input_file_name, 'rb') as fi:
-        img = exif.Image(fi)
+        img_original_datetime: datetime = None) -> bool:
+    try:
+        img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
+        offset_str = get_utc_offset(img_datetime)
 
-    img.datetime = img_datetime_str
+        image = PIL.Image.open(input_file_name)
+        if image.info.get("exif"):
+            exif_dict = piexif.load(image.info['exif'])
+        else:
+            exif_dict = {"Exif":{}}
+        
+        exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = img_datetime_str.encode()
+        exif_dict['Exif'][piexif.ExifIFD.OffsetTimeOriginal] = offset_str.encode()
 
-    if img_original_datetime:
-        img.datetime_original = \
-            original_file_date.strftime('%Y:%m:%d %H:%M:%S')
-    else:
-        img.datetime_original = img_datetime_str
+        exif_bytes = piexif.dump(exif_dict)
+        image.save(output_file_name, exif=exif_bytes)
 
-    img.datetime_digitized = img_datetime_str
-
-    with open(output_file_name, 'wb') as fi:
-        fi.write(img.get_file())
+    except Exception as e:
+        with open("report.txt", "a") as f:
+            print("! Error writing jpg metadata:", e, "->", end=" ", file=f)
+        print("! Error writing jpg metadata:", e, "->", end=" ")
+        return False
+    return True
 
 def write_png_with_metadata(
     input_file_name: str,
     output_file_name: str,
-    img_datetime: datetime):
-    image = PIL.Image.open(input_file_name)
+    img_datetime: datetime) -> bool:
+    try:
+        image = PIL.Image.open(input_file_name)
 
-    # Create a PngInfo object to store metadata
-    metadata = PIL.PngImagePlugin.PngInfo()
+        # Create a PngInfo object to store metadata
+        metadata = PIL.PngImagePlugin.PngInfo()
 
-    for key in image.info:
-        metadata.add_text(key, image.info[key])
-    
-    img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
-    metadata.add_text("Creation Time", img_datetime_str)
-    
-    image.save(output_file_name, "PNG", pnginfo=metadata)
+        for key in image.info:
+            if type(image.info[key]) is int or type(image.info[key]) is float:
+                val = str(image.info[key])
+            elif type(image.info[key]) is tuple or type(image.info[key]) is list:
+                val = ", ".join(map(str,image.info[key]))
+            elif type(image.info[key]) is dict:
+                val = ', '.join(f'{key}: {value}' for key, value in image.info[key].items())
+            else:
+                val = image.info[key]
+            metadata.add_text(key, val)
+        
+        img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
+        img_offset_str = get_utc_offset(img_datetime)
+        metadata.add_text("Creation Time", img_datetime_str)
+        metadata.add_text("Offset Time", img_offset_str)
+        
+        image.save(output_file_name, "PNG", pnginfo=metadata)
+        image.close()
+    except Exception as e:
+        with open("report.txt", "a") as f:
+            print("! Error writing png metadata:", e, "->", end=" ", file=f)
+        print("! Error writing png metadata:", e, "->", end=" ")
+        return False
+    return True
 
 def write_video_with_metadata(
         input_file_name: str, 
         output_file_name: str, 
         video_date: datetime,
-        config: ConfigParser):
-    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
-    video_datetime_localized = local_timezone.localize(video_date)
-    video_datetime_utc = video_datetime_localized.astimezone(pytz.UTC)
+        config: ConfigParser) -> bool:
+    try:
+        video_datetime_utc = video_date.astimezone(pytz.UTC)
 
-    # Parse the video_datetime_utc into a formatted string
-    creation_time = video_datetime_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-    
-    # Create a FFmpeg input stream
-    input_stream = ffmpeg.input(input_file_name)
+        # Parse the video_datetime_utc into a formatted string
+        creation_time = video_datetime_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        
+        # Create a FFmpeg input stream
+        input_stream = ffmpeg.input(input_file_name)
 
-    # Create an FFmpeg output stream with the updated creation_date metadata
-    output_stream = ffmpeg.output(
-        input_stream,
-        output_file_name,
-        **{
-            "metadata": f"creation_time={creation_time}",
-            "c": "copy",
-        }
-    )
+        # Create an FFmpeg output stream with the updated creation_date metadata
+        output_stream = ffmpeg.output(
+            input_stream,
+            output_file_name,
+            **{
+                "metadata": f"creation_time={creation_time}",
+                "c": "copy",
+            }
+        )
 
-    # Run the FFmpeg command
-    ffmpeg.run(output_stream, quiet=True)
+        # Run the FFmpeg command
+        ffmpeg.run(output_stream, quiet=True)
+    except Exception as e:
+        with open("report.txt", "a") as f:
+            print("! Error writing video metadata:", e, "->", end=" ", file=f)
+        print("! Error writing video metadata:", e, "->", end=" ")
+        return False
+    return True
 
 def guess_media_type(file_name: str):
     file_ext = file_name.split(".")[-1].lower()

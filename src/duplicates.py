@@ -39,7 +39,10 @@ def __generate_image_hash(file_path: str):
         img_hash = hash_obj.hexdigest()
         
         return img_hash
-    except IOError:
+    except Exception as e:
+        with open("report.txt", "a") as f:
+            print(f"An error occurred while generating an image hash: {str(e)}", file=f)
+        print(f"An error occurred while generating an image hash: {str(e)}")
         return None
 
 def __generate_video_shape(file_path: str):
@@ -60,6 +63,8 @@ def __generate_video_shape(file_path: str):
 
         return video_shape
     except Exception as e:
+        with open("report.txt", "a") as f:
+            print(f"An error occurred while generating a video shape: {str(e)}", file=f)
         print(f"An error occurred while generating a video shape: {str(e)}")
         return None
 
@@ -91,6 +96,8 @@ def __generate_video_hash(file_path: str):
 
         return video_hash_value
     except Exception as e:
+        with open("report.txt", "a") as f:
+            print(f"An error occurred while generating a video hash: {str(e)}", file=f)
         print(f"An error occurred while generating a video hash: {str(e)}")
         return None
 
@@ -180,10 +187,15 @@ def generate_report(start_path, config: ConfigParser):
     with open("duplicates.txt", "w") as fi:
         for dup in dups:
             print('"', '","'.join(dup), '"', file=fi, sep="")
+
+    with open("report.txt", "a") as f:
+        print(datetime.now(), "Done!", file=f)
     print(datetime.now(), "Done!")
     return dups
 
 def move_older(duplicate_tuples: list, config: ConfigParser):
+    with open("report.txt", "a") as f:
+        print(datetime.now(), "Moving duplicate files ... ", file=f)
     print(datetime.now(), "Moving duplicate files ... ")
     dest_dir = config.get("settings", "duplicate_path")
     preferred_keyword = config.get("settings", "preferred_keyword_in_dups")
@@ -229,5 +241,7 @@ def move_older(duplicate_tuples: list, config: ConfigParser):
                 except (OSError, shutil.Error) as e:
                     pass
 
+    with open("report.txt", "a") as f:
+        print(datetime.now(), "Done!", file=f)
     print(datetime.now(), "Done!")
     return moved_files

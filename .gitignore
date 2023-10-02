@@ -164,3 +164,5 @@ error/
 fixed/
 duplicates/
 duplicates.txt
+.vscode
+report.txt

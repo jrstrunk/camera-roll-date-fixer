@@ -6,7 +6,7 @@ from os.path import isfile, join
 import shutil
 import ffmpeg
 from configparser import ConfigParser
-import src.determine_date as determine_date
+from src.determine_date import determine_date
 import src.fixer_util as fixer_util
 from src.img_name_gen import ImgNameGen
 import src.duplicates as duplicates
@@ -18,11 +18,6 @@ input_path = config.get("settings", "input_path")
 output_path = config.get("settings", "output_path")
 error_path = config.get("settings", "error_path")
 duplicate_path = config.get("settings", "duplicate_path")
-use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
-use_json_date = config.getboolean("settings", "get_date_from_json_file")
-use_metadata_date = config.getboolean("settings", "get_date_from_file_metadata")
-use_gphotos_json_date = config.getboolean("settings", "get_date_from_gphotos_json_file")
-use_file_name_date = config.getboolean("settings", "get_date_from_file_name")
 use_month_subdirs = config.getboolean("settings", "output_in_month_subdirs")
 report_dups = config.getboolean("settings", "report_duplicated_files")
 move_dups = config.getboolean("settings", "move_reported_duplicate_files")
@@ -38,40 +33,27 @@ files = [
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
 
+with open("report.txt", "w") as f:
+    print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...", file=f)
 print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...")
 
 for i, file_name in enumerate(files):
     input_file_name = f'{input_path}/{file_name}'
     error_file_name = f'{error_path}/{file_name}'
     
+    with open("report.txt", "a") as f:
+        print(i, file_name, "->", end=" ", file=f)
     print(i, file_name, "->", end=" ")
-    got_date_from_metadata = False
 
-    file_date = determine_date.from_user_override(config)
-
-    if not file_date and use_json_date:
-        file_date, original_file_date = \
-            determine_date.from_json(input_file_name)
-
-    if not file_date and use_metadata_date:
-        file_date, got_date_from_metadata = \
-            determine_date.from_metadata(input_file_name, config)
-
-    if not file_date and use_gphotos_json_date:
-        file_date = \
-            determine_date.from_gphotos_json(input_file_name, config)
-
-    if not file_date and use_file_name_date:
-        file_date = determine_date.from_file_name(input_file_name)
-
-    if not file_date and use_sys_date:
-        file_date = determine_date.from_sys_file_times(input_file_name)
+    file_date, original_file_date, write_metadata = determine_date(input_file_name, config)
 
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
     if not fixer_util.is_within_years(file_date, config):
         shutil.copy2(input_file_name, error_file_name)
-        print("Error!")
+        with open("report.txt", "a") as f:
+            print("! Date out of bounds, putting in error dir", file=f)
+        print("! Date out of bounds, putting in error dir")
         continue
 
     new_file_name = img_name_gen.gen_image_name(file_name, file_date, config)
@@ -87,53 +69,34 @@ for i, file_name in enumerate(files):
     # write the date to the exif data if it is a jpg file and the date did not
     # originally come from the exif data
     successful_metadata_write = False
-    if not got_date_from_metadata:
+    if write_metadata:
         if ".jpg" in input_file_name.lower() \
                 or ".jpeg" in input_file_name.lower():
-            try:
-                fixer_util.write_jpg_with_exif(
-                    input_file_name, 
-                    output_file_name, 
-                    file_date, 
-                    original_file_date
-                )
-
-                successful_metadata_write = True
-
-            except:
-                pass
+            successful_metadata_write = fixer_util.write_jpg_with_exif(
+                input_file_name, 
+                output_file_name, 
+                file_date, 
+                original_file_date
+            )
 
         elif ".png" in input_file_name.lower():
-            try:
-                fixer_util.write_png_with_metadata(
-                    input_file_name, 
-                    output_file_name, 
-                    file_date, 
-                )
-
-                successful_metadata_write = True
-
-            except Exception as e:
-                print(e)
-                pass
+            successful_metadata_write = fixer_util.write_png_with_metadata(
+                input_file_name, 
+                output_file_name, 
+                file_date, 
+            )
 
         elif ".mp4" in input_file_name.lower() \
                 or ".mkv" in input_file_name.lower() \
                 or ".webm" in input_file_name.lower() \
                 or ".m4a" in input_file_name.lower() \
                 or ".mov" in input_file_name.lower():
-            try:
-                fixer_util.write_video_with_metadata(
-                    input_file_name, 
-                    output_file_name, 
-                    file_date,
-                    config,
-                )
-
-                successful_metadata_write = True
-
-            except:
-                pass
+            successful_metadata_write = fixer_util.write_video_with_metadata(
+                input_file_name, 
+                output_file_name, 
+                file_date,
+                config,
+            )
 
     # copy the file to the output file if a new file was not 
     # written with metadata 
@@ -145,10 +108,14 @@ for i, file_name in enumerate(files):
 
     # write that the file was modified when it was taken
     os.utime(output_file_name, (modTime, modTime))
+    with open("report.txt", "a") as f:
+        print(new_file_name, file=f)
     print(new_file_name)
 
     time.sleep(0.01)
 
+with open("report.txt", "a") as f:
+    print(datetime.now(), "Done fixing file times!", file=f)
 print(datetime.now(), "Done fixing file times!")
 
 if report_dups:

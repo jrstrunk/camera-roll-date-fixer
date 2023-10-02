@@ -14,13 +14,58 @@ import pytz
 from dateutil import parser
 from .ffprobe import FFProbe
 
-def from_metadata(file_name: str, config: ConfigParser):
-    file_date, got_date = from_video_metadata(file_name, config)
+def determine_date(file_name: str, config: ConfigParser):
+    use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
+    use_json_date = config.getboolean("settings", "get_date_from_json_file")
+    use_metadata_date = config.getboolean("settings", "get_date_from_file_metadata")
+    use_gphotos_json_date = config.getboolean("settings", "get_date_from_gphotos_json_file")
+    use_file_name_date = config.getboolean("settings", "get_date_from_file_name")
+
+    got_date_from_metadata = False
+
+    file_date = from_user_override(config)
+
+    if not file_date and use_json_date:
+        file_date, original_file_date = from_json(file_name)
+
+    if not file_date and use_metadata_date:
+        file_date, got_date_from_metadata = from_metadata(file_name)
+
+    if not file_date and use_gphotos_json_date:
+        file_date = from_gphotos_json(file_name)
+
+    if not file_date and use_file_name_date:
+        file_date = from_file_name(file_name)
+
+    if not file_date and use_sys_date:
+        file_date = from_sys_file_times(file_name)
+    
+    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
+
+    # if we got a naive date time from the file, assume it is local 
+    # time, otherwise change it to local time
+    if file_date:
+        if not file_date.tzinfo:
+            file_date = file_date.replace(tzinfo=local_timezone)
+        else:
+            file_date = file_date.astimezone(local_timezone)
+
+    if original_file_date:
+        if not original_file_date.tzinfo:
+            original_file_date = original_file_date.replace(tz_info=local_timezone)
+        else:
+            original_file_date = original_file_date.astimezone(local_timezone)
+
+    return file_date, original_file_date, not got_date_from_metadata
+
+def from_metadata(file_name: str):
+    file_date, got_date = from_video_metadata(file_name)
     if not got_date:
         file_date, got_date = from_photo_metadata(file_name)
     return file_date, got_date
 
 def from_photo_metadata(file_name: str):
+    """Photo metadata often stores the time in Local Time"""
     if ".jpg" in file_name.lower() \
             or ".jpeg" in file_name.lower():
         try:
@@ -50,14 +95,15 @@ def from_photo_metadata(file_name: str):
     elif ".png" in file_name.lower():
         try:
             img = PIL.Image.open(file_name)
-            return datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S"), True
+            if img.info.get("Creation Time"):
+                return datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S"), True
         except:
             pass
 
     return None, False
 
-def from_video_metadata(file_name: str, config: ConfigParser):
-    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
+def from_video_metadata(file_name: str):
+    """Video metadata often stores the time in UTC"""
     metadata = {}
     try:
         # Use FFprobe to get metadata from the video file
@@ -66,16 +112,16 @@ def from_video_metadata(file_name: str, config: ConfigParser):
         # Extract the metadata
         if probe.metadata.get("creation_time"):
             utc_time = datetime.strptime(probe.metadata["creation_time"], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.UTC)
-            return utc_time.astimezone(local_timezone), True
+            return utc_time, True
 
         for stream in probe.streams:
             creation_time = stream.__dict__.get("TAG:creation_time")
             if creation_time:
                 utc_time = datetime.strptime(creation_time, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.UTC)
-                return utc_time.astimezone(local_timezone), True
+                return utc_time, True
 
     except Exception as e:
-        print(e)
+        print("Error getting video metadata: ", e)
         pass
 
     return None, False
@@ -146,7 +192,7 @@ def from_file_name(file_name: str):
 def from_json(file_name: str):
     return None, None
 
-def from_gphotos_json(file_name: str, config: ConfigParser):
+def from_gphotos_json(file_name: str):
     data = None
 
     def get_json_data(file_name):
@@ -179,9 +225,7 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
     data = get_json_data(file_name)
 
     if data:
-        date_obj = parser.parse(data["photoTakenTime"]["formatted"])
-        local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
-        return date_obj.astimezone(local_timezone)
+        return parser.parse(data["photoTakenTime"]["formatted"])
 
     return None
 
@@ -189,9 +233,7 @@ def from_user_override(config: ConfigParser):
     user_override = config.get("settings", "manual_file_date_override")
     if not user_override:
         return
-    date_obj = parser.isoparse(user_override)
-    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
-    return date_obj.astimezone(local_timezone)
+    return parser.isoparse(user_override)
 
 def from_sys_file_times(file_name: str):
     """This is dangerous!"""
