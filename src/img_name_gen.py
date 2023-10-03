@@ -86,12 +86,12 @@ class ImgNameGen:
 
         return "_UKN"
 
-    def get_postfix(self, img_filename: str):
+    def get_postfix(self, file_name_no_ext: str):
         # Do not waste time checking for words if it does not have more than 
         # two letters in the name, like when it is a numerical filename.
         # Filenames without their extension or path should be passed to this 
         # function.
-        cleaned_file_name = img_filename\
+        cleaned_file_name = file_name_no_ext\
             .replace("IMG_", "")\
             .replace("MVIMG", "")\
             .replace("VID_", "")\
@@ -100,7 +100,9 @@ class ImgNameGen:
         if not bool(re.search("[a-zA-Z]{3,}", cleaned_file_name)):
             return ""
 
-        # find all valid words in the filename and add them to the infix words
+        any_valid_words = False
+
+        # find all valid words in the filename and add them to the postfix words
         # list
         postfix_words = []
         mut_img_filename = cleaned_file_name.lower()
@@ -112,14 +114,24 @@ class ImgNameGen:
             if word in mut_img_filename:
                 mut_img_filename = mut_img_filename.replace(word, "")
                 postfix_words.append(word)
+                any_valid_words = True
 
-        # create an infix that consists of each word in the infix word list
+        # create an postfix that consists of each word in the postfix word list
         # in its original order and in camel case
         word_indices = {word: cleaned_file_name.lower().find(word) for word in postfix_words}
-        sorted_infix_words = sorted(postfix_words, key=lambda x: word_indices[x])
+        sorted_postfix_words = sorted(postfix_words, key=lambda x: word_indices[x])
 
-        postfix = "".join([w.capitalize() for w in sorted_infix_words])
+        # if there is an alphanumerical designation at the end of the 
+        # name, like "My Photo 41d.jpg", then try to preserve that
+        desig = ""
+        if any_valid_words:
+            last_sect = mut_img_filename.split(" ")[-1]
+            last_sect = re.sub(r"\([^()]*\)", "", last_sect) # remove potential (2) at the end
+            if len(last_sect) < 5 and re.match("^([A-Za-z]|\d)+$", last_sect):
+                desig = last_sect
+
+        postfix = "".join([w.capitalize() for w in sorted_postfix_words])
         if len(postfix):
-            return "_" + postfix
+            return "_" + postfix + desig
 
         return ""

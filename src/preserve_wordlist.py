@@ -1,6 +1,4 @@
 __custom_words_to_preserve = [
-    "screenshot",
-    "snapchat",
     "strunk",
     "websize",
     "edited",
@@ -10,10 +8,19 @@ __custom_words_to_preserve = [
     "rendered",
     "rpreplay",
     "vlcsnap",
+    "my",
+    "by",
+    "nani!",
 ]
 
+# many of these are already accounted for in some way and to not
+# need to be preserved at the end of the file name
 words_to_not_preserve = [
     "from",
+    "screenshot",
+    "snapchat",
+    "portrait",
+    "image",
 ]
 
 with open('resources/words.txt') as word_file:
