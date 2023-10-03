@@ -3,6 +3,7 @@ from datetime import datetime
 from configparser import ConfigParser
 import exif
 import random
+import re
 import string
 from .preserve_wordlist import words_to_preserve, words_to_not_preserve
 from . import fixer_util 
@@ -51,7 +52,7 @@ class ImgNameGen:
 
         self.prev_filenames.append(img_filename)
 
-        consonants = ''.join(set(string.ascii_uppercase) - set('AEIOUYJ'))
+        consonants = ''.join(set(string.ascii_uppercase) - set('AEIOUYJXZ'))
 
         if incr == 0:
             return "_" + "".join(random.choices(consonants, k=2))
@@ -59,29 +60,33 @@ class ImgNameGen:
             return f"_{incr}" + "".join(random.choices(consonants, k=1))
         return f"_{incr}"
 
-    def get_prefix(self, file_name: str):
-        img_prefixes_from_file_name = {
-            "PXL_": "_PXL",
-            "WIN_": "_WIN",
-            "MVIMG": "_MVIMG",
-            "MVI_": "_MVI",
-            ".MP": "_MPVID",
-            ".MP.JPG": "_MPIMG",
+    def get_media_type_prefix(self, file_name: str, file_type: str) -> str:
+        img_prefix_regexs_from_file_name = {
+            "^PXL_": "_PXL",
+            "^WIN_": "_WIN",
+            "^MVIMG": "_MVIMG",
+            "^MVI_": "_MVI",
+            ".MP$": "_MPVID",
+            ".MP.JPG$": "_MPIMG",
+            "SNAPCHAT.*JPG": "_SNAPP",
+            "SNAPCHAT.*MP4": "_SNAPV",
+            "SCREENSHOT": "_SSHOT",
+            "PORTRAIT": "_PORTR",
         }
 
         file_ext = file_name.split(".")[-1].lower()
 
-        for val, prefix in img_prefixes_from_file_name.items():
-            if val in file_name.upper():
+        for regex, prefix in img_prefix_regexs_from_file_name.items():
+            if re.search(regex, file_name.upper()):
                 return prefix
 
-        if file_ext in fixer_util.image_extensions:
+        if file_type == "image":
             return "_IMG"
         
-        if file_ext in fixer_util.video_extensions:
+        if file_type == "video":
             return "_VID"
         
-        if file_ext in fixer_util.audio_extensions:
+        if file_type == "audio":
             return "_AUD"
 
         return "_UKN"
