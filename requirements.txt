@@ -2,3 +2,5 @@ Pillow
 pytz
 opencv-python
 ffmpeg-python
+piexif
+python-magic
