@@ -200,24 +200,36 @@ def from_gphotos_json(file_name: str):
             file_path_split[-1] = file_path_split[-1][0:46]
             short_file_name = "/".join(file_path_split)
 
+            # check for a straight conversion from the file name to 
+            # the json file
             if os.path.isfile(f"{short_file_name}.json"):
-                with open(f"{short_file_name}.json") as fi:
-                    return json.load(fi)
+                with open(f"{short_file_name}.json") as f:
+                    return json.load(f)
 
+            # translating a file with a filename duplicate number at the 
+            # end is not straigtforward, "hi(2).jpg" -> "hi.jpg(2).json
             for num in range(5):
                 minus_num_file_name = \
                     short_file_name.replace(f"({num})", "") + f"({num}).json"
 
                 if f"({num})" in file_name and os.path.isfile(minus_num_file_name):
-                    with open(minus_num_file_name) as fi:
-                        return json.load(fi)
+                    with open(minus_num_file_name) as f:
+                        return json.load(f)
 
             # google photos names the json files a little differently than the 
-            # actual file in these circumstances
+            # actual file when there was an edit
             minus_edited_file_name = file_name.replace('-edited', '') + ".json"
             if "-edited" in file_name and os.path.isfile(minus_edited_file_name):
-                with open(minus_edited_file_name) as fi:
-                    return json.load(fi)
+                with open(minus_edited_file_name) as f:
+                    return json.load(f)
+
+            # in some cases the file extension is just left out of the json 
+            # file name, like "de.jpg_large.jpg" -> "de.jpg_large.json"
+            minus_ext_file_name = ".".join(file_name.split(".")[0:-1]) + ".json"
+            if os.path.isfile(minus_ext_file_name):
+                with open(minus_ext_file_name) as f:
+                    return json.load(f)
+
         except:
             pass
 
