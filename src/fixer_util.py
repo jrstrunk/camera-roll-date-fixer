@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 from configparser import ConfigParser
+from .ffprobe import FFProbe
 import hashlib
 import shutil
 import ffmpeg
@@ -146,6 +147,21 @@ def write_png_with_metadata(
         return False
     return True
 
+def get_video_comment(file_name: str):
+    try:
+        # Use FFprobe to get metadata from the video file
+        probe = FFProbe(file_name)
+
+        # Extract the metadata
+        if probe.metadata.get("comment"):
+            return probe.metadata.get("comment") + ", "
+
+    except Exception as e:
+        print("Error getting video comment metdata: ", e)
+        pass
+
+    return ""
+
 def write_video_with_metadata(
         input_file_name: str, 
         output_file_name: str, 
@@ -154,24 +170,39 @@ def write_video_with_metadata(
     try:
         video_datetime_utc = video_date.astimezone(pytz.UTC)
 
-        # Parse the video_datetime_utc into a formatted string
         creation_time = video_datetime_utc.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        
-        # Create a FFmpeg input stream
+        comment = get_video_comment(input_file_name) + \
+            "creation_time_iso " + video_date.isoformat()
+
+        # create a tmp file that has the proper creation time metadata
         input_stream = ffmpeg.input(input_file_name)
 
-        # Create an FFmpeg output stream with the updated creation_date metadata
+        tmp_output_file_name = "tmp/" + output_file_name.split("/")[-1]
+
+        tmp_output_stream = ffmpeg.output(
+            input_stream,
+            tmp_output_file_name,
+            c="copy",
+            map_metadata="0",
+            metadata=f'creation_time={creation_time}',
+        )
+
+        ffmpeg.run(tmp_output_stream, quiet=True)
+
+        # copy the tmp file but add a comment with the offset time
+        input_stream = ffmpeg.input(tmp_output_file_name)
+
         output_stream = ffmpeg.output(
             input_stream,
             output_file_name,
-            **{
-                "metadata": f"creation_time={creation_time}",
-                "c": "copy",
-            }
+            c="copy",
+            map_metadata="0",
+            metadata=f'comment={comment}',
         )
 
-        # Run the FFmpeg command
         ffmpeg.run(output_stream, quiet=True)
+
+        os.remove(tmp_output_file_name)
     except Exception as e:
         with open("report.txt", "a") as f:
             print("! Error writing video metadata:", e, "->", end=" ", file=f)

@@ -166,3 +166,4 @@ duplicates/
 duplicates.txt
 .vscode
 report.txt
+tmp/

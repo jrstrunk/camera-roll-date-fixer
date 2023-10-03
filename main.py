@@ -33,6 +33,11 @@ files = [
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
 
+try:
+    os.mkdir("tmp")
+except:
+    pass
+
 with open("report.txt", "w") as f:
     print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...", file=f)
 print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...")
@@ -113,6 +118,11 @@ for i, file_name in enumerate(files):
     print(new_file_name)
 
     time.sleep(0.01)
+
+try:
+    os.rmdir("tmp")
+except:
+    pass
 
 with open("report.txt", "a") as f:
     print(datetime.now(), "Done fixing file times!", file=f)
