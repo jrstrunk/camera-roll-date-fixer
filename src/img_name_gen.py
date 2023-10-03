@@ -45,7 +45,7 @@ class ImgNameGen:
 
         self.prev_filenames.append(img_filename)
 
-        consonants = ''.join(set(string.ascii_uppercase) - set('AEIOU'))
+        consonants = ''.join(set(string.ascii_uppercase) - set('AEIOUYJ'))
 
         if incr == 0:
             return "_" + "".join(random.choices(consonants, k=2))
