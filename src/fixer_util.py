@@ -9,6 +9,7 @@ import exif
 import piexif
 import pytz
 import PIL
+import magic
 
 video_extensions = [
     "mp4", 
@@ -20,6 +21,7 @@ video_extensions = [
     "3gp", 
     "mpeg",
     "mp",
+    "ogv",
 ]
 
 image_extensions = [
@@ -59,7 +61,30 @@ audio_extensions = [
     "mp3",
     "wav",
     "m4a",
+    "weba",
+    "oga",
 ]
+
+mime_types = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/heic": "heic",
+    "image/tiff": "tiff",
+    "image/x-panasonic-raw": "raw",
+    "video/x-msvideo": "avi",
+    "video/mp4": "mp4",
+    "video/mpeg": "mpeg",
+    "video/ogg": "ogv",
+    "video/webm": "webm",
+    "video/x-matroska": "mkv",
+    "video/quicktime": "mov",
+    "audio/mpeg": "mp3",
+    "audio/wav": "wav",
+    "audio/webm": "weba",
+    "audio/ogg": "oga",
+}
 
 def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
@@ -80,6 +105,37 @@ def create_directories(file_path: str):
     
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
+
+def get_file_type(file_path: str) -> str:
+    file_type = "unknown"
+    file_extension = ""
+
+    try:
+        mime = magic.from_file(file_path, mime=True)
+        file_type = mime.split("/")[0]
+        file_extension = mime_types.get(mime, "")
+    except:
+        with open("report.txt", "a") as f:
+            print("Unknown MIME type ->", end=" ", file=f)
+        print("Unknown MIME type ->", end=" ")
+
+    try:
+        if not file_extension:
+            file_extension = file_name.split(".")[-1]
+
+        if file_type == "unknown":
+            if file_extension in image_extensions:
+                file_type = "image"
+            elif file_extension in video_extensions:
+                file_type = "video"
+            elif file_extension in audio_extensions:
+                file_type = "audio"
+    except:
+        with open("report.txt", "a") as f:
+            print("! Unable to get extension type ->", end=" ", file=f)
+        print("! Unable to get extension type ->", end=" ")
+
+    return file_type, file_extension
 
 def get_utc_offset(localized_datetime: datetime) -> str:
     return localized_datetime.isoformat()[-6:]

@@ -11,13 +11,14 @@ class ImgNameGen:
     def __init__(self):
         self.prev_filenames = []
 
-    def gen_image_name(self, 
+    def gen_file_name(self, 
             file_name: str, 
-            img_date: datetime, 
+            file_type: str,
+            file_extension: str,
+            file_date: datetime, 
             config: ConfigParser):
-        file_ext = "." + file_name.split(".")[-1]
-        date_str = self.get_date_str(img_date)
-        date_prefix_name = date_str + self.get_prefix(file_name)
+        date_str = self.get_date_str(file_date)
+        file_name_no_ext = ".".join(file_name.split(".")[0:-1])
 
         if not config.getboolean("settings", "rename_files"):
             return file_name
@@ -25,10 +26,15 @@ class ImgNameGen:
         if config.getboolean("settings", "preserve_original_file_name"):
             return date_str + "_" + file_name
 
-        return date_prefix_name \
-            + self.get_nonce(date_prefix_name) \
-            + self.get_postfix(file_name.replace(file_ext, "")) \
-            + file_ext.lower()
+        postfix = self.get_postfix(file_name_no_ext)
+        media_type_prefix = self.get_media_type_prefix(file_name, file_type)
+        nonceless_name = date_str + media_type_prefix + postfix
+
+        return date_str \
+            + self.get_nonce(nonceless_name) \
+            + media_type_prefix \
+            + postfix \
+            + "." + file_extension.lower()
 
     def get_date_str(self, img_date: datetime):
         return datetime.strftime(img_date, '%Y%m%d_%H%M%S')

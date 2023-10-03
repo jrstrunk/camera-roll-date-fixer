@@ -61,7 +61,15 @@ for i, file_name in enumerate(files):
         print("! Date out of bounds, putting in error dir")
         continue
 
-    new_file_name = img_name_gen.gen_image_name(file_name, file_date, config)
+    file_type, file_extension = fixer_util.get_file_type(input_file_name)
+
+    new_file_name = img_name_gen.gen_file_name(
+        file_name, 
+        file_type, 
+        file_extension, 
+        file_date, 
+        config,
+    )
 
     if use_month_subdirs:
         output_file_name = f"{output_path}/" \
@@ -75,8 +83,7 @@ for i, file_name in enumerate(files):
     # originally come from the exif data
     successful_metadata_write = False
     if write_metadata:
-        if ".jpg" in input_file_name.lower() \
-                or ".jpeg" in input_file_name.lower():
+        if file_extension == "jpg":
             successful_metadata_write = fixer_util.write_jpg_with_exif(
                 input_file_name, 
                 output_file_name, 
@@ -84,18 +91,14 @@ for i, file_name in enumerate(files):
                 original_file_date
             )
 
-        elif ".png" in input_file_name.lower():
+        elif file_extension == "png":
             successful_metadata_write = fixer_util.write_png_with_metadata(
                 input_file_name, 
                 output_file_name, 
                 file_date, 
             )
 
-        elif ".mp4" in input_file_name.lower() \
-                or ".mkv" in input_file_name.lower() \
-                or ".webm" in input_file_name.lower() \
-                or ".m4a" in input_file_name.lower() \
-                or ".mov" in input_file_name.lower():
+        elif file_type == "video":
             successful_metadata_write = fixer_util.write_video_with_metadata(
                 input_file_name, 
                 output_file_name, 
