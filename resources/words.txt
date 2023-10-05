@@ -25368,7 +25368,6 @@ baas
 baaskaap
 baaskaaps
 baaskap
-bab
 baba
 babacoote
 babai
@@ -94525,6 +94524,7 @@ duxelles
 duxes
 dvaita
 dvandva
+dvd
 dvigu
 dvorak
 dvornik
@@ -162659,7 +162659,6 @@ kai
 kay
 kaiak
 kayak
-kayaking
 kayaker
 kayakers
 kaiaks

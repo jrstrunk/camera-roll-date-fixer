@@ -1,3 +1,4 @@
+import re
 __custom_words_to_preserve = [
     "strunk",
     "websize",
@@ -10,6 +11,7 @@ __custom_words_to_preserve = [
     "vlcsnap",
     "my",
     "by",
+    "we",
     "nani!",
 ]
 
@@ -17,9 +19,6 @@ __custom_words_to_preserve = [
 # need to be preserved at the end of the file name
 words_to_not_preserve = [
     "from",
-    "screenshot",
-    "snapchat",
-    "portrait",
     "image",
 ]
 
@@ -30,6 +29,15 @@ words_to_preserve = [
     *__custom_words_to_preserve, 
     *sorted(
         [w for w in valid_words if len(w) > 2 and not w in words_to_not_preserve], 
+        key=lambda x: len(x),
+        reverse=True
+    )
+]
+
+larger_words_to_preserve = [
+    *__custom_words_to_preserve, 
+    *sorted(
+        [w for w in valid_words if len(w) > 3 and not w in words_to_not_preserve], 
         key=lambda x: len(x),
         reverse=True
     )
