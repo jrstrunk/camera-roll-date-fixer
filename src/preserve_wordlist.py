@@ -13,6 +13,12 @@ __custom_words_to_preserve = [
     "by",
     "we",
     "nani!",
+    "youtube",
+    "google",
+    "nike",
+    "addidas",
+    "reddit",
+    "instagram",
 ]
 
 # many of these are already accounted for in some way and to not
