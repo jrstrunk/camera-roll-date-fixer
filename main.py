@@ -42,6 +42,12 @@ with open("report.txt", "w") as f:
     print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...", file=f)
 print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...")
 
+print("!!!! Warning !!!!")
+print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
+    'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".' + \
+    'Either accpt this or fix it before running again.')
+print("")
+
 for i, file_name in enumerate(files):
     input_file_name = f'{input_path}/{file_name}'
     error_file_name = f'{error_path}/{file_name}'
