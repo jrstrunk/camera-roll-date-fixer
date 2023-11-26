@@ -73,19 +73,52 @@ def from_photo_metadata(file_name: str):
 
         try:
             if img.datetime_original:
-                return datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S"), True
+                img_date = datetime.strptime(img.datetime_original, "%Y:%m:%d %H:%M:%S")
+
+                try:
+                    if img.offset_time_original:
+                        offset_minutes = int(img.offset_time_original[:3]) \
+                            * 60 + int(img.offset_time_original[4:])
+                        offset_tz = pytz.FixedOffset(offset_minutes)
+                        img_date = img_date.replace(tzinfo=offset_tz)
+                except:
+                    pass
+                    
+                return img_date, True
         except:
             pass
 
         try:
             if img.datetime:
-                return datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+                img_date = datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+
+                try:
+                    if img.offset_time:
+                        offset_minutes = int(img.offset_time[:3]) \
+                            * 60 + int(img.offset_time[4:])
+                        offset_tz = pytz.FixedOffset(offset_minutes)
+                        img_date = img_date.replace(tzinfo=offset_tz)
+                except:
+                    pass
+
+                return img_date, True
         except:
             pass
 
         try:
             if img.datetime_digitized:
-                return datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+                img_date = datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+
+                try:
+                    if img.offset_time_digitized:
+                        offset_minutes = int(img.offset_time_digitized[:3]) \
+                            * 60 + int(img.offset_time_digitized[4:])
+                        offset_tz = pytz.FixedOffset(offset_minutes)
+                        img_date = img_date.replace(tzinfo=offset_tz)
+                except:
+                    pass
+
+                return img_date, True
         except:
             pass
     except:
@@ -95,7 +128,18 @@ def from_photo_metadata(file_name: str):
     try:
         img = PIL.Image.open(file_name)
         if img.info.get("Creation Time"):
-            return datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S"), True
+            img_date = datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S")
+
+            try:
+                if img.info.get("Offset Time"):
+                    offset_minutes = int(img.info["Offset Time"][:3]) \
+                        * 60 + int(img.info["Offset Time"][4:])
+                    offset_tz = pytz.FixedOffset(offset_minutes)
+                    img_date = img_date.replace(tzinfo=offset_tz)
+            except:
+                pass
+
+            return img_date, True
     except:
         pass
 
