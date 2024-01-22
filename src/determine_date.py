@@ -173,13 +173,13 @@ def from_file_name(file_name: str):
     possible_date_formats = []
 
     delimiters = ["", " ", "-", "_", ".", " AT ", " at "]
-    sub_delimiters = ["", "-", "_", "."]
+    sub_delimiters = ["", "-", "_", ".", " "]
     # the empty period must be last or else it will match dates with a period
     # before the appropiate period has had a chance to
     periods = [" AM", " PM", " am", " pm", "AM", "PM", "am", "pm", ""]
 
     # generate regex and datetime format str for each possible date format that
-    # has the same sub delimiter for each block
+    # has the same sub delimiter for each block, eg. "2024-01-21 09.36.10"
     date_format_quadruple_tuples = \
         itertools.product(sub_delimiters, delimiters, sub_delimiters, periods)
 
@@ -194,11 +194,17 @@ def from_file_name(file_name: str):
             hour_code = "%I"
             period_code = "%p"
 
+        # account for all digit date
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}",
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
         })
-    
+        # account for date with short month name
+        possible_date_formats.append({
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}",
+            "format": f"%Y{sub_delim1}%b{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
+        })
+
     # generate regex and datetime format str for each possible date format that
     # has the h,m,s delimiters for the time block
     date_format_triple_tuples = \
@@ -215,11 +221,32 @@ def from_file_name(file_name: str):
             hour_code = "%I"
             period_code = "%p"
 
+        # account for all digit date
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}",
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
         })
+        # account for date with short month name
+        possible_date_formats.append({
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}",
+            "format": f"%Y{sub_delim1}%d{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
+        })
 
+    # generate regex and datetime format str for each possible date format that
+    # only has the date, eg. "2011.08.24"
+    date_format_singles = sub_delimiters
+
+    for sub_delim1 in date_format_singles:
+        # account for all digit date
+        possible_date_formats.append({
+            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d",
+            "format": f"%Y{sub_delim1}%m{sub_delim1}%d",
+        })
+        # account for date with short month name
+        possible_date_formats.append({
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d",
+            "format": f"%Y{sub_delim1}%b{sub_delim1}%d",
+        })
     for date_format in possible_date_formats:
         match = re.search(date_format["regex"], file_name)
         if match:
