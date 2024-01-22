@@ -36,7 +36,7 @@
         "label": "Img Burst Cover"
     },
     "00000IMG_00000_BURST20190207164738.jpg": {
-        "date": "2019/02/07/ 16:47:38",
+        "date": "2019/02/07 16:47:38",
         "label": "Img Burst"
     },
     "00000PORTRAIT_00000_BURST20200403161348968.jpg": {
@@ -2756,7 +2756,7 @@
         "label": "Burst Cover Collage"
     },
     "Burst_Cover_GIF_Action_20170227082243.gif": {
-        "date": "2017/08/22 22:36:34",
+        "date": "2017/02/27 08:22:43",
         "label": "Burst Cover GIF Action"
     },
     "Burst_Cover_Group_Smiles_20170822223811.jpg": {
@@ -3384,7 +3384,7 @@
         "label": ""
     },
     "IMG-20190328-WA0000.jpg": {
-        "date": "2019/03/28",
+        "date": "2019/03/28 00:00:00",
         "label": ""
     },
     "IMG1637825.jpg": {
@@ -3452,7 +3452,7 @@
         "label": ""
     },
     "IMG_20190421_130615_exported_1335_1555879732828.jpg": {
-        "date": "2019/04/20 17:01:27",
+        "date": "2019/04/21 13:06:15",
         "label": "Exported"
     },
     "IMG_20190629_122426.jpg": {
@@ -3524,11 +3524,11 @@
         "label": "Image"
     },
     "Image__5962-2017-03-18.jpg": {
-        "date": "",
+        "date": "2017/03/18 00:00:00",
         "label": "Image"
     },
     "Image__9887-2017-02-25.jpg": {
-        "date": "",
+        "date": "2017/02/25 00:00:00",
         "label": "Image"
     },
     "Indian Ben.jpg": {
@@ -3712,8 +3712,8 @@
         "label": "Latias GG End 33"
     },
     "LatiasLatiosGXTagBolt105.jpg": {
-        "date": "Latias Latios GX Tag Bolt 105",
-        "label": ""
+        "date": "",
+        "label": "Latias Latios GX Tag Bolt 105"
     },
     "Lb9VaWG.jpg": {
         "date": "",
@@ -3940,96 +3940,36 @@
         "label": ""
     },
     "PXL_20200914_234351249.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2020/09/14 23:43:51.249",
+        "label": "PXL"
     },
     "PXL_20200920_224629961.PORTRAIT-01.COVER.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2020/09/20 22:46:29.961",
+        "label": "PXL Cover"
     },
     "PXL_20200920_224629961.PORTRAIT-02.ORIGINAL.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2020/09/20 22:46:29.961",
+        "label": "PXL Portrait Original"
     },
     "PXL_20201202_042435343.NIGHT.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210314_141726336.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2020/12/02 04:24:35.343",
+        "label": "PXL Night"
     },
     "PXL_20210404_200457704.PORTRAIT.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210709_004653199.PORTRAIT.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_211316148.PANO.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_213820502.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_213900275.PANO.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_215112620.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_215119980.MP": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_215119980.MP.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2021/04/04 20:04:57.704",
+        "label": "PXL Portrait"
     },
     "PXL_20210813_223813324.PANO.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_223836853.MP": {
-        "date": "",
-        "label": ""
+        "date": "2021/08/13 22:38:13.324",
+        "label": "PXL Pano"
     },
     "PXL_20210813_223836853.MP.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_234231975.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_234236815.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210813_235817632.PANO.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20210814_000050435.jpg": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20220807_234428995.MP": {
-        "date": "",
-        "label": ""
-    },
-    "PXL_20220807_234428995.MP.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2021/08/13 22:38:36.853",
+        "label": "PXL MP"
     },
     "PXL_20220808_224144600 - Copy.jpg": {
-        "date": "",
-        "label": ""
+        "date": "2022/08/08 22:41:44.600",
+        "label": "PXL - Copy"
     },
     "Panda I am a Man.jpg": {
         "date": "",
@@ -5152,7 +5092,7 @@
         "label": "Banana Republic Navy"
     },
     "bandicam 2015-01-01 01-31-34-040.avi": {
-        "date": "",
+        "date": "2015/01/01 01:31:34.040",
         "label": ""
     },
     "barer1owgns11.png": {
