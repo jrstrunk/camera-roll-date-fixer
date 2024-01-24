@@ -11,6 +11,7 @@ import re
 import itertools
 import json
 import pytz
+import src.fixer_util as fixer_util
 from dateutil import parser
 from .ffprobe import FFProbe
 
@@ -26,19 +27,19 @@ def determine_date(file_name: str, config: ConfigParser):
     file_date = from_user_override(config)
 
     if not file_date and use_json_date:
-        file_date, original_file_date = from_json(file_name)
+        file_date, original_file_date = from_json(file_name, config)
 
     if not file_date and use_metadata_date:
-        file_date, got_date_from_metadata = from_metadata(file_name)
+        file_date, got_date_from_metadata = from_metadata(file_name, config)
 
     if not file_date and use_gphotos_json_date:
-        file_date = from_gphotos_json(file_name)
+        file_date = from_gphotos_json(file_name, config)
 
     if not file_date and use_file_name_date:
-        file_date = from_file_name(file_name)
+        file_date = from_file_name(file_name, config)
 
     if not file_date and use_sys_date:
-        file_date = from_sys_file_times(file_name)
+        file_date = from_sys_file_times(file_name, config)
     
     local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
 
@@ -58,11 +59,15 @@ def determine_date(file_name: str, config: ConfigParser):
 
     return file_date, original_file_date, not got_date_from_metadata
 
-def from_metadata(file_name: str):
-    file_date, got_date = from_video_metadata(file_name)
+def from_metadata(file_name: str, config: ConfigParser):
+    file_date, got_date = from_photo_metadata(file_name)
     if not got_date:
-        file_date, got_date = from_photo_metadata(file_name)
-    return file_date, got_date
+        file_date, got_date = from_video_metadata(file_name)
+
+    if fixer_util.is_within_years(file_date, config):
+        return file_date, got_date
+
+    return None, False
 
 def from_photo_metadata(file_name: str):
     """Photo metadata often stores the time in Local Time"""
@@ -126,20 +131,23 @@ def from_photo_metadata(file_name: str):
 
     # png file handling
     try:
-        img = PIL.Image.open(file_name)
-        if img.info.get("Creation Time"):
-            img_date = datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S")
+        for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "DateTimeDigitized"]:
+            img = PIL.Image.open(file_name)
+            if img.info.get(datetimeTag):
+                img_date = datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S")
 
-            try:
-                if img.info.get("Offset Time"):
-                    offset_minutes = int(img.info["Offset Time"][:3]) \
-                        * 60 + int(img.info["Offset Time"][4:])
-                    offset_tz = pytz.FixedOffset(offset_minutes)
-                    img_date = img_date.replace(tzinfo=offset_tz)
-            except:
-                pass
+                try:
+                    for offsetTag in ["Offset Time", "OffsetTime", "OffsetTimeOriginal", "OffsetTimeDigitized"]:
+                        if img.info.get(effsetTag):
+                            offset_minutes = int(img.info["Offset Time"][:3]) \
+                                * 60 + int(img.info["Offset Time"][4:])
+                            offset_tz = pytz.FixedOffset(offset_minutes)
+                            img_date = img_date.replace(tzinfo=offset_tz)
+                            break
+                except:
+                    pass
 
-            return img_date, True
+                return img_date, True
     except:
         pass
 
@@ -169,7 +177,7 @@ def from_video_metadata(file_name: str):
 
     return None, False
 
-def from_file_name(file_name: str):
+def from_file_name(file_name: str, config: ConfigParser):
     possible_date_formats = []
 
     delimiters = ["", " ", "-", "_", ".", " AT ", " at "]
@@ -196,12 +204,12 @@ def from_file_name(file_name: str):
 
         # account for all digit date
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
         })
         # account for date with short month name
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%b{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
         })
 
@@ -223,12 +231,12 @@ def from_file_name(file_name: str):
 
         # account for all digit date
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
         })
         # account for date with short month name
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%d{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
         })
 
@@ -239,19 +247,23 @@ def from_file_name(file_name: str):
     for sub_delim1 in date_format_singles:
         # account for all digit date
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d",
         })
         # account for date with short month name
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d",
+            "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%b{sub_delim1}%d",
         })
+
     for date_format in possible_date_formats:
-        match = re.search(date_format["regex"], file_name)
-        if match:
+        matches = re.findall(f"(?=({date_format['regex']}))", file_name)
+        for match in matches:
             try:
-                return datetime.strptime(match.group(0), date_format["format"])
+                file_date = datetime.strptime(match, date_format["format"])
+                if fixer_util.is_within_years(file_date, config):
+                    return file_date
+
             # if this throws an error, then the "date" being parsed was not 
             # a valid date, so continue in the loop
             except:
@@ -259,10 +271,10 @@ def from_file_name(file_name: str):
 
     return None
 
-def from_json(file_name: str):
+def from_json(file_name: str, config: ConfigParser):
     return None, None
 
-def from_gphotos_json(file_name: str):
+def from_gphotos_json(file_name: str, config: ConfigParser):
     data = None
 
     def get_json_data(file_name):
@@ -307,7 +319,9 @@ def from_gphotos_json(file_name: str):
     data = get_json_data(file_name)
 
     if data:
-        return parser.parse(data["photoTakenTime"]["formatted"])
+        file_date = parser.parse(data["photoTakenTime"]["formatted"])
+        if fixer_util.is_within_years(file_date, config):
+            return file_date
 
     return None
 
@@ -317,7 +331,7 @@ def from_user_override(config: ConfigParser):
         return
     return parser.isoparse(user_override)
 
-def from_sys_file_times(file_name: str):
+def from_sys_file_times(file_name: str, config: ConfigParser):
     """This is dangerous!"""
     # get the file modified date
     mod_time = os.path.getmtime(file_name)

@@ -60,7 +60,7 @@ for i, file_name in enumerate(files):
 
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
-    if not fixer_util.is_within_years(file_date, config):
+    if not file_date:
         shutil.copy2(input_file_name, error_file_name)
         with open("report.txt", "a") as f:
             print("! Date out of bounds, putting in error dir", file=f)
