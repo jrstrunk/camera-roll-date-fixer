@@ -57,8 +57,7 @@ print(
 print("!!!! Warning !!!!")
 print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
     'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
-print("Either accpt this or fix it before running again.")
-print("")
+print("Either disable file renaming or accept this issue.", end="\n\n")
 
 for i, file_name in enumerate(files):
     input_file_name = f'{input_path}/{file_name}'
