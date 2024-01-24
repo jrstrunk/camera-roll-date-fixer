@@ -45,7 +45,6 @@ print(datetime.now(), f"Attemping to fix file times for all files in {input_path
 print("!!!! Warning !!!!")
 print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
     'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
-print('The file name "2023-11-15 Little Hacker" is not recognized as a date')
 print("Either accpt this or fix it before running again.")
 print("")
 
