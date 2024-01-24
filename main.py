@@ -38,9 +38,21 @@ try:
 except:
     pass
 
-with open("report.txt", "w") as f:
-    print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...", file=f)
-print(datetime.now(), f"Attemping to fix file times for all files in {input_path} ...")
+if config.get("settings", "continuous_reporting"):
+    open_type = "a"
+else:
+    open_type = "w"
+
+with open("report.txt", open_type) as f:
+    print(
+        datetime.now(), 
+        f"Attemping to fix file times for all files in {input_path} ...", 
+        file=f,
+    )
+print(
+    datetime.now(), 
+    f"Attemping to fix file times for all files in {input_path} ..."
+)
 
 print("!!!! Warning !!!!")
 print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
@@ -56,7 +68,8 @@ for i, file_name in enumerate(files):
         print(i, file_name, "->", end=" ", file=f)
     print(i, file_name, "->", end=" ")
 
-    file_date, original_file_date, write_metadata = determine_date(input_file_name, config)
+    file_date, original_file_date, write_metadata = determine_date(
+        input_file_name, config)
 
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
@@ -142,3 +155,7 @@ if report_dups:
 
     if dups and move_dups:
         duplicates.move_older(dups, config)
+
+with open("report.txt", "a") as f:
+    print(datetime.now(), "Done!", end="\n\n", file=f)
+print(datetime.now(), "Done!")

@@ -188,9 +188,6 @@ def generate_report(start_path, config: ConfigParser):
         for dup in dups:
             print('"', '","'.join(dup), '"', file=fi, sep="")
 
-    with open("report.txt", "a") as f:
-        print(datetime.now(), "Done!", file=f)
-    print(datetime.now(), "Done!")
     return dups
 
 def move_older(duplicate_tuples: list, config: ConfigParser):
@@ -241,7 +238,4 @@ def move_older(duplicate_tuples: list, config: ConfigParser):
                 except (OSError, shutil.Error) as e:
                     pass
 
-    with open("report.txt", "a") as f:
-        print(datetime.now(), "Done!", file=f)
-    print(datetime.now(), "Done!")
     return moved_files
