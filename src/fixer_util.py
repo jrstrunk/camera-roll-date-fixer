@@ -10,6 +10,7 @@ import piexif
 import pytz
 import PIL
 import magic
+import tempfile
 
 video_extensions = [
     "mp4", 
@@ -230,35 +231,34 @@ def write_video_with_metadata(
         comment = get_video_comment(input_file_name) + \
             "creation_time_iso " + video_date.isoformat()
 
-        # create a tmp file that has the proper creation time metadata
-        input_stream = ffmpeg.input(input_file_name)
+        with tempfile.TemporaryDirectory(dir=".") as tmpd:
+            # create a tmp file that has the proper creation time metadata
+            input_stream = ffmpeg.input(input_file_name)
 
-        tmp_output_file_name = "tmp/" + output_file_name.split("/")[-1]
+            tmp_output_file_name = tmpd.replace("./", "") + "/" + output_file_name.split("/")[-1]
 
-        tmp_output_stream = ffmpeg.output(
-            input_stream,
-            tmp_output_file_name,
-            c="copy",
-            map_metadata="0",
-            metadata=f'creation_time={creation_time}',
-        )
+            tmp_output_stream = ffmpeg.output(
+                input_stream,
+                tmp_output_file_name,
+                c="copy",
+                map_metadata="0",
+                metadata=f'creation_time={creation_time}',
+            )
 
-        ffmpeg.run(tmp_output_stream, quiet=True)
+            ffmpeg.run(tmp_output_stream, quiet=True)
 
-        # copy the tmp file but add a comment with the offset time
-        input_stream = ffmpeg.input(tmp_output_file_name)
+            # copy the tmp file but add a comment with the offset time
+            input_stream = ffmpeg.input(tmp_output_file_name)
 
-        output_stream = ffmpeg.output(
-            input_stream,
-            output_file_name,
-            c="copy",
-            map_metadata="0",
-            metadata=f'comment={comment}',
-        )
+            output_stream = ffmpeg.output(
+                input_stream,
+                output_file_name,
+                c="copy",
+                map_metadata="0",
+                metadata=f'comment={comment}',
+            )
 
-        ffmpeg.run(output_stream, quiet=True)
-
-        os.remove(tmp_output_file_name)
+            ffmpeg.run(output_stream, quiet=True)
     except Exception as e:
         with open("report.txt", "a") as f:
             print("! Error writing video metadata:", e, "->", end=" ", file=f)
