@@ -18,14 +18,15 @@ class ImgNameGen:
             file_extension: str,
             file_date: datetime, 
             config: ConfigParser):
-        date_str = self.get_date_str(file_date)
-        file_name_no_ext = ".".join(file_name.split(".")[0:-1])
-
         if not config.getboolean("settings", "rename_files"):
             return file_name
 
+        date_str = self.get_date_str(file_date)
+
         if config.getboolean("settings", "preserve_original_file_name"):
             return date_str + "_" + file_name
+
+        file_name_no_ext = ".".join(file_name.split(".")[0:-1])
 
         media_type_prefix = self.get_media_type_prefix(file_name, file_type)
         postfix = self.get_postfix(file_name_no_ext)

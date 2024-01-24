@@ -25,10 +25,11 @@ only_dedup = config.getboolean("settings", "only_dedup")
 
 img_name_gen = ImgNameGen()
 
-files = [
-    f for f in listdir(input_path) 
-        if isfile(join(input_path, f)) and not ".json" in f
-] if not only_dedup else []
+input_files = []
+if not only_dedup:
+    for root, dirs, files in os.walk(input_path):
+        for f in [f for f in files if not ".json" in f]:
+            input_files.append(os.path.join(root, f))
 
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
@@ -54,9 +55,18 @@ print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
     'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
 print("Either disable file renaming or accept this issue.", end="\n\n")
 
-for i, file_name in enumerate(files):
-    input_file_name = f'{input_path}/{file_name}'
-    error_file_name = f'{error_path}/{file_name}'
+for i, input_file_name in enumerate(input_files):
+    file_name = input_file_name.replace(input_path + "/", "")
+    rel_file_path = ""
+
+    split_name = file_name.rsplit("/", 1)
+    if len(split_name) == 2:
+        file_name = split_name[1]
+
+        if config.getboolean("settings", "preserve_directory_structure"):
+            rel_file_path = "/" + split_name[0]
+
+    error_file_name = f"{error_path + rel_file_path}/{file_name}"
     
     with open("report.txt", "a") as f:
         print(i, file_name, "->", end=" ", file=f)
@@ -68,6 +78,7 @@ for i, file_name in enumerate(files):
     # if the parsed date is not valid, write the file to the error path and
     # continue to the next
     if not file_date:
+        fixer_util.create_directories(error_file_name)
         shutil.copy2(input_file_name, error_file_name)
         with open("report.txt", "a") as f:
             print("! Date out of bounds, putting in error dir", file=f)
@@ -84,13 +95,15 @@ for i, file_name in enumerate(files):
         config,
     )
 
-    if use_month_subdirs:
+    preserve_dirs = config.getboolean("settings", "preserve_directory_structure")
+    if use_month_subdirs and (not preserve_dirs or not rel_file_path):
         output_file_name = f"{output_path}/" \
             + f"{file_date.strftime('%Y')}/{file_date.strftime('%m')}/" \
             + f"{new_file_name}"
-        fixer_util.create_directories(output_file_name)
     else:
-        output_file_name = f"{output_path}/{new_file_name}"
+        output_file_name = f"{output_path}{rel_file_path}/{new_file_name}"
+
+    fixer_util.create_directories(output_file_name)
 
     # write the date to the exif data if it is a jpg file and the date did not
     # originally come from the exif data
