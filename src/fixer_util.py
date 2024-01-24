@@ -245,7 +245,7 @@ def write_video_with_metadata(
                 metadata=f'creation_time={creation_time}',
             )
 
-            ffmpeg.run(tmp_output_stream, quiet=True)
+            ffmpeg.run(tmp_output_stream, overwrite_output=True, quiet=True)
 
             # copy the tmp file but add a comment with the offset time
             input_stream = ffmpeg.input(tmp_output_file_name)
@@ -258,7 +258,7 @@ def write_video_with_metadata(
                 metadata=f'comment={comment}',
             )
 
-            ffmpeg.run(output_stream, quiet=True)
+            ffmpeg.run(output_stream, overwrite_output=True, quiet=True)
     except Exception as e:
         with open("report.txt", "a") as f:
             print("! Error writing video metadata:", e, "->", end=" ", file=f)
