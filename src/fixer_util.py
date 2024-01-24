@@ -156,8 +156,8 @@ def write_jpg_with_exif(
         else:
             exif_dict = {"Exif":{}}
         
-        exif_dict['Exif'][piexif.ExifIFD.DateTime] = img_datetime_str.encode()
-        exif_dict['Exif'][piexif.ExifIFD.OffsetTime] = offset_str.encode()
+        exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = img_datetime_str.encode()
+        exif_dict['Exif'][piexif.ExifIFD.OffsetTimeOriginal] = offset_str.encode()
 
         exif_bytes = piexif.dump(exif_dict)
         image.save(output_file_name, exif=exif_bytes)
