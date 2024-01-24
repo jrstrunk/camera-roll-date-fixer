@@ -257,8 +257,8 @@ def from_file_name(file_name: str, config: ConfigParser):
         })
 
     for date_format in possible_date_formats:
-        match = re.search(date_format["regex"], file_name)
-        if match:
+        matches = re.findall(f"(?=({date_format['regex']}))", file_name)
+        for match in matches:
             try:
                 file_date = datetime.strptime(match, date_format["format"])
                 if fixer_util.is_within_years(file_date, config):
