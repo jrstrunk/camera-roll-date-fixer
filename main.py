@@ -33,7 +33,7 @@ files = [
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
 
-if config.get("settings", "continuous_reporting"):
+if config.getboolean("settings", "continuous_reporting"):
     open_type = "a"
 else:
     open_type = "w"
@@ -129,9 +129,12 @@ for i, file_name in enumerate(files):
 
     # write that the file was modified when it was taken
     os.utime(output_file_name, (modTime, modTime))
+
+    log_stmt = new_file_name if config.getboolean("settings", "rename_files") \
+        else file_date.strftime('%Y-%m-%d %H:%M:%S')
     with open("report.txt", "a") as f:
-        print(new_file_name, file=f)
-    print(new_file_name)
+        print(log_stmt, file=f)
+    print(log_stmt)
 
     time.sleep(0.01)
 
