@@ -95,7 +95,7 @@ def from_photo_metadata(file_name: str):
 
         try:
             if img.datetime:
-                img_date = datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S"), True
+                img_date = datetime.strptime(img.datetime, "%Y:%m:%d %H:%M:%S")
 
                 try:
                     if img.offset_time:
@@ -112,7 +112,7 @@ def from_photo_metadata(file_name: str):
 
         try:
             if img.datetime_digitized:
-                img_date = datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S"), True
+                img_date = datetime.strptime(img.datetime_digitized, "%Y:%m:%d %H:%M:%S")
 
                 try:
                     if img.offset_time_digitized:
