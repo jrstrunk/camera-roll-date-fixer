@@ -1,6 +1,10 @@
 Pillow
 pytz
 opencv-python
+opencv-python-headless
 ffmpeg-python
+ffprobe-python
+exif
 piexif
 python-magic
+dateutil
