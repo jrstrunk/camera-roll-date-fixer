@@ -24,7 +24,9 @@ Helps you to fix incorrect file and metadata dates for your photos and videos. I
 
 2. Install the required Python packages by running `pip install -r requirements.txt`.
 
-3. Configure the `config.ini` file with your desired settings. The available settings are as follows:
+3. Install ffmpeg and make sure it is globally excessable via the `ffmpeg` and `ffprobe` commands
+
+4. Configure the `config.ini` file with your desired settings. Some of the available settings are as follows:
 
     - `input_path`: The directory containing the input files (photos and videos).
     - `output_path`: The directory where the fixed files will be saved.
@@ -34,6 +36,7 @@ Helps you to fix incorrect file and metadata dates for your photos and videos. I
     - `unpreferred_keyword_in_dups`: Keyword to deprioritize when handling duplicates (can be a directory name or file extension).
     - `get_date_from_sys_file_times`: Whether to use system file times as a fallback method to determine dates (less reliable).
     - `output_in_month_subdirs`: Whether to organize output files into month-based subdirectories, eg. fixed/2023/05/photo.jpg
+    - `preserve_directory_structure`: Whether to preserve the directory structure of the input directory or not
     - `report_duplicated_files`: Whether to check for duplicate files.
     - `move_reported_duplicate_files`: Whether to move the found duplicate files.
     - `heavy_duplicate_file_checking`: Whether to use pixel comparison for duplicate checking (increased accuracy but longer processing time).
@@ -43,4 +46,4 @@ Helps you to fix incorrect file and metadata dates for your photos and videos. I
     - `earliest_year` and `latest_year`: The range of years to consider as valid dates.
     - `local_timezone`: The local timezone to use when parsing dates.
 
-4. Run the script with `python main.py`.
+5. Run the script with `python main.py`.
