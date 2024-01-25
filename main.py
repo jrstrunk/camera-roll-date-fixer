@@ -50,10 +50,11 @@ print(
     f"Attemping to fix file times for all files in {input_path} ..."
 )
 
-print("!!!! Warning !!!!")
-print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
-    'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
-print("Either disable file renaming or accept this issue.", end="\n\n")
+if config.getboolean("settings", "rename_files"):
+    print("!!!! Warning !!!!")
+    print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
+        'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
+    print("Either disable file renaming or accept this issue.", end="\n\n")
 
 for i, input_file_name in enumerate(input_files):
     file_name = input_file_name.replace(input_path + "/", "")
