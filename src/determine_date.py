@@ -24,6 +24,7 @@ def determine_date(file_name: str, config: ConfigParser):
 
     got_date_from_metadata = False
 
+    original_file_date = None
     file_date = from_user_override(config)
 
     if not file_date and use_json_date:
