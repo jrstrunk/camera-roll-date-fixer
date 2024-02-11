@@ -11,6 +11,7 @@ import pytz
 import PIL
 import magic
 import tempfile
+import json
 
 video_extensions = [
     "mp4", 
@@ -265,6 +266,16 @@ def write_video_with_metadata(
         print("! Error writing video metadata:", e, "->", end=" ")
         return False
     return True
+
+def write_json_sidecar(output_file_name: str, file_date: datetime):
+    img_datetime_str = file_date.strftime('%Y:%m:%d %H:%M:%S')
+    img_offset_str = get_utc_offset(file_date)
+
+    with open(output_file_name + ".json", "w") as f:
+        json.dump(
+            {"DateTime": img_datetime_str, "OffsetTime": img_offset_str},
+            f,
+        )
 
 def guess_media_type(file_name: str):
     file_ext = file_name.split(".")[-1].lower()

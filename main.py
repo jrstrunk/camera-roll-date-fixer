@@ -137,6 +137,9 @@ for i, input_file_name in enumerate(input_files):
                 config,
             )
 
+        elif config.getboolean("settings", "write_json_for_unsupported_types"):
+            fixer_util.write_json_sidecar(output_file_name, file_date)
+
     # copy the file to the output file if a new file was not 
     # written with metadata 
     if not successful_metadata_write:
