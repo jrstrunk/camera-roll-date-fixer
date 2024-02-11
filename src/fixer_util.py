@@ -92,15 +92,26 @@ def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
         return False
 
-    year1 = config.getint("parsing", "earliest_year")
-    year2 = config.getint("parsing", "latest_year")
-    
-    if year1 > year2:
-        tmp = year1
-        year1 = year2
-        year2 = tmp
-    
-    return year1 <= dt.year <= year2
+    earliest_year = config.get("parsing", "earliest_year")
+    latest_year = config.get("parsing", "latest_year")
+
+    try:
+        earliest_year = int(earliest_year)
+    except:
+        earliest_year = None
+
+    try:
+        latest_year = int(latest_year)
+    except:
+        latest_year = None
+
+    if (earliest_year and dt.year < earliest_year):
+        return False
+
+    if (latest_year and dt.year > latest_year):
+        return False
+
+    return True
 
 def create_directories(file_path: str):
     dir_path = os.path.dirname(file_path)
