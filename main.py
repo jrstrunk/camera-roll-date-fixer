@@ -108,6 +108,10 @@ for i, input_file_name in enumerate(input_files):
 
     # write the date to the exif data if it is a jpg file and the date did not
     # originally come from the exif data
+    if config.getboolean("settings", "override_png_metadata") \
+            and file_extension == "png" :
+        write_metadata = True
+
     successful_metadata_write = False
     if write_metadata:
         if file_extension == "jpg":
