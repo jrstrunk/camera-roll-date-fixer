@@ -48,7 +48,7 @@ def determine_date(file_name: str, config: ConfigParser):
     # time, otherwise change it to local time
     if file_date:
         if not file_date.tzinfo:
-            file_date = file_date.replace(tzinfo=local_timezone)
+            file_date = local_timezone.localize(file_date)
         else:
             file_date = file_date.astimezone(local_timezone)
 
