@@ -14,14 +14,13 @@ import src.duplicates as duplicates
 config = ConfigParser()
 config.read('config.ini')
 
-input_path = config.get("settings", "input_path")
-output_path = config.get("settings", "output_path")
-error_path = config.get("settings", "error_path")
-duplicate_path = config.get("settings", "duplicate_path")
-use_month_subdirs = config.getboolean("settings", "output_in_month_subdirs")
-report_dups = config.getboolean("settings", "report_duplicated_files")
-move_dups = config.getboolean("settings", "move_reported_duplicate_files")
-only_dedup = config.getboolean("settings", "only_dedup")
+input_path = config.get("structure", "input_path")
+output_path = config.get("structure", "output_path")
+error_path = config.get("structure", "error_path")
+use_month_subdirs = config.getboolean("structure", "output_in_month_subdirs")
+report_dups = config.getboolean("deduplication", "search_for_duplicate_files")
+move_dups = config.getboolean("deduplication", "move_duplicate_files")
+only_dedup = config.getboolean("deduplication", "only_dedup")
 
 img_name_gen = ImgNameGen()
 
@@ -34,7 +33,7 @@ if not only_dedup:
 fixer_util.create_directories(output_path + "/o")
 fixer_util.create_directories(error_path + "/e")
 
-if config.getboolean("settings", "continuous_reporting"):
+if config.getboolean("structure", "continuous_reporting"):
     open_type = "a"
 else:
     open_type = "w"
@@ -50,7 +49,7 @@ print(
     f"Attemping to fix file times for all files in {input_path} ..."
 )
 
-if config.getboolean("settings", "rename_files"):
+if config.getboolean("output", "rename_files"):
     print("!!!! Warning !!!!")
     print('For some reason "OffsetFix_20190208_015413_VID_CB.mov" ' + \
         'gets renamed to "20190207_205413_VID_Offset.mp4", missing the "Fix".')
@@ -96,7 +95,7 @@ for i, input_file_name in enumerate(input_files):
         config,
     )
 
-    preserve_dirs = config.getboolean("settings", "preserve_directory_structure")
+    preserve_dirs = config.getboolean("structure", "preserve_directory_structure")
     if use_month_subdirs and (not preserve_dirs or not rel_file_path):
         output_file_name = f"{output_path}/" \
             + f"{file_date.strftime('%Y')}/{file_date.strftime('%m')}/" \
@@ -108,7 +107,7 @@ for i, input_file_name in enumerate(input_files):
 
     # write the date to the exif data if it is a jpg file and the date did not
     # originally come from the exif data
-    if config.getboolean("settings", "override_png_metadata") \
+    if config.getboolean("output", "override_png_metadata") \
             and file_extension == "png" :
         write_metadata = True
 
@@ -137,7 +136,7 @@ for i, input_file_name in enumerate(input_files):
                 config,
             )
 
-        elif config.getboolean("settings", "write_json_for_unsupported_types"):
+        elif config.getboolean("output", "write_json_for_unsupported_types"):
             fixer_util.write_json_sidecar(output_file_name, file_date)
 
     # copy the file to the output file if a new file was not 
@@ -151,7 +150,7 @@ for i, input_file_name in enumerate(input_files):
     # write that the file was modified when it was taken
     os.utime(output_file_name, (modTime, modTime))
 
-    log_stmt = new_file_name if config.getboolean("settings", "rename_files") \
+    log_stmt = new_file_name if config.getboolean("output", "rename_files") \
         else file_date.strftime('%Y-%m-%d %H:%M:%S')
     with open("report.txt", "a") as f:
         print(log_stmt, file=f)

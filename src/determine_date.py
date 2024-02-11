@@ -16,11 +16,11 @@ from dateutil import parser
 from .ffprobe import FFProbe
 
 def determine_date(file_name: str, config: ConfigParser):
-    use_sys_date = config.getboolean("settings", "get_date_from_sys_file_times")
-    use_json_date = config.getboolean("settings", "get_date_from_json_file")
-    use_metadata_date = config.getboolean("settings", "get_date_from_file_metadata")
-    use_gphotos_json_date = config.getboolean("settings", "get_date_from_gphotos_json_file")
-    use_file_name_date = config.getboolean("settings", "get_date_from_file_name")
+    use_sys_date = config.getboolean("parsing", "get_date_from_sys_file_times")
+    use_json_date = config.getboolean("parsing", "get_date_from_json_file")
+    use_metadata_date = config.getboolean("parsing", "get_date_from_file_metadata")
+    use_gphotos_json_date = config.getboolean("parsing", "get_date_from_gphotos_json_file")
+    use_file_name_date = config.getboolean("parsing", "get_date_from_file_name")
 
     got_date_from_metadata = False
 
@@ -42,7 +42,7 @@ def determine_date(file_name: str, config: ConfigParser):
     if not file_date and use_sys_date:
         file_date = from_sys_file_times(file_name, config)
     
-    local_timezone = pytz.timezone(config.get("settings", "local_timezone"))
+    local_timezone = pytz.timezone(config.get("parsing", "local_timezone"))
 
     # if we got a naive date time from the file, assume it is local 
     # time, otherwise change it to local time
@@ -327,7 +327,7 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
     return None
 
 def from_user_override(config: ConfigParser):
-    user_override = config.get("settings", "manual_file_date_override")
+    user_override = config.get("parsing", "manual_file_date_override")
     if not user_override:
         return
     return parser.isoparse(user_override)

@@ -92,8 +92,8 @@ def is_within_years(dt: datetime, config: ConfigParser):
     if not dt: 
         return False
 
-    year1 = config.getint("settings", "earliest_year")
-    year2 = config.getint("settings", "latest_year")
+    year1 = config.getint("parsing", "earliest_year")
+    year2 = config.getint("parsing", "latest_year")
     
     if year1 > year2:
         tmp = year1

@@ -182,7 +182,7 @@ def __find_duplicate_files(*paths, heavy=True):
 
 def generate_report(start_path, config: ConfigParser):
     print(datetime.now(), "Generating duplicate file report ... ")
-    heavy = config.get("settings", "heavy_duplicate_file_checking")
+    heavy = config.get("deduplication", "heavy_duplicate_file_checking")
     dups = __find_duplicate_files(start_path, heavy=heavy)
     with open("duplicates.txt", "w") as fi:
         for dup in dups:
@@ -194,9 +194,9 @@ def move_older(duplicate_tuples: list, config: ConfigParser):
     with open("report.txt", "a") as f:
         print(datetime.now(), "Moving duplicate files ... ", file=f)
     print(datetime.now(), "Moving duplicate files ... ")
-    dest_dir = config.get("settings", "duplicate_path")
-    preferred_keyword = config.get("settings", "preferred_keyword_in_dups")
-    unpreferred_keyword = config.get("settings", "unpreferred_keyword_in_dups")
+    dest_dir = config.get("deduplication", "duplicate_path")
+    preferred_keyword = config.get("deduplication", "preferred_keyword_in_dups")
+    unpreferred_keyword = config.get("deduplication", "unpreferred_keyword_in_dups")
 
     fixer_util.create_directories(dest_dir + "/d")
     moved_files = []
