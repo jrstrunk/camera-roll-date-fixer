@@ -278,14 +278,28 @@ def write_video_with_metadata(
         return False
     return True
 
-def write_json_sidecar(output_file_name: str, file_date: datetime):
-    img_datetime_str = file_date.strftime('%Y:%m:%d %H:%M:%S')
+def write_sidecar(output_file_name: str, file_date: datetime):
+    """Use the XMP file format and the photoshop DateCreated tag because
+        it supports offset time and PhotoPrism is known to parse it on import"""
+    img_datetime_str = file_date.strftime('%Y-%m-%dT%H:%M:%S')
     img_offset_str = get_utc_offset(file_date)
 
-    with open(output_file_name + ".json", "w") as f:
-        json.dump(
-            {"DateTime": img_datetime_str, "OffsetTime": img_offset_str},
-            f,
+    file_name_no_ext, _ = os.path.splitext(output_file_name)
+    output_file_name = file_name_no_ext + ".xmp"
+
+    with open(output_file_name, "w") as f:
+        print(
+            '<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="XMP Core 6.0.0">',
+            '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">',
+            '    <rdf:Description rdf:about=""',
+            '            xmlns:exif="http://ns.adobe.com/exif/1.0/"',
+            '            xmlns:photoshop="http://ns.adobe.com/photoshop/1.0/">',
+            f"        <photoshop:DateCreated>{img_datetime_str}{img_offset_str}</photoshop:DateCreated>",
+            '    </rdf:Description>',
+            "</rdf:RDF>",
+            "</x:xmpmeta>",
+            sep="\n",
+            file=f,
         )
 
 def guess_media_type(file_name: str):
