@@ -63,7 +63,7 @@ for i, input_file_name in enumerate(input_files):
     if len(split_name) == 2:
         file_name = split_name[1]
 
-        if config.getboolean("settings", "preserve_directory_structure"):
+        if config.getboolean("structure", "preserve_directory_structure"):
             rel_file_path = "/" + split_name[0]
 
     error_file_name = f"{error_path + rel_file_path}/{file_name}"
