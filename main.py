@@ -136,7 +136,8 @@ for i, input_file_name in enumerate(input_files):
                 config,
             )
 
-        elif config.getboolean("output", "write_sidecar_for_unsupported_types"):
+        if config.getboolean("output", "write_sidecar_for_unsupported_types") \
+                and not successful_metadata_write:
             fixer_util.write_sidecar(output_file_name, file_date)
 
     # copy the file to the output file if a new file was not 
