@@ -45,7 +45,7 @@ def determine_date(file_name: str, config: ConfigParser):
     local_timezone = pytz.timezone(config.get("parsing", "local_timezone"))
 
     # if we got a naive date time from the file, assume it is local 
-    # time, otherwise change it to local time
+    # time, otherwise convert it to local time
     if file_date:
         if not file_date.tzinfo:
             file_date = local_timezone.localize(file_date)

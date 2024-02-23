@@ -21,9 +21,16 @@ class ImgNameGen:
         if not config.getboolean("output", "rename_files"):
             return file_name
 
+        if config.getboolean("output", "expand_file_types_in_name"):
+            file_name = self.expand_media_type(file_name)
+
         date_str = self.get_date_str(file_date)
 
         if config.getboolean("output", "preserve_original_file_name"):
+            if date_str in file_name:
+                # do not duplicate the date in the file name if the 
+                # original already had it
+                return file_name 
             return date_str + "_" + file_name
 
         file_name_no_ext = ".".join(file_name.split(".")[0:-1])
@@ -72,7 +79,7 @@ class ImgNameGen:
         return f"_{incr}"
 
     def get_media_type_prefix(self, file_name: str, file_type: str) -> str:
-        img_prefix_regexs_from_file_name = {
+        img_prefix_regexes_from_file_name = {
             "^PXL_": "_PXL",
             "^WIN_": "_WIN",
             "^MVIMG": "_MVIMG",
@@ -85,9 +92,7 @@ class ImgNameGen:
             "PORTRAIT": "_PORTR",
         }
 
-        file_ext = file_name.split(".")[-1].lower()
-
-        for regex, prefix in img_prefix_regexs_from_file_name.items():
+        for regex, prefix in img_prefix_regexes_from_file_name.items():
             if re.search(regex, file_name.upper()):
                 return prefix
 
@@ -101,6 +106,25 @@ class ImgNameGen:
             return "_AUD"
 
         return "_UKN"
+
+    def expand_media_type(self, file_name: str) -> str:
+        img_media_types = {
+            "WIN_": "_Windows",
+            "SNAPP_": "_Snapchat",
+            "SNAPV_": "_Snapchat",
+            "SSHOT_": "_Screenshot",
+            "PORTR_": "_Portrait",
+        }
+
+        file_ext = "." + file_name.split(".")[-1].lower()
+
+        for short_type, full_type in img_media_types.items():
+            if short_type in file_name.upper():
+                file_name = file_name.replace(short_type, "")
+                file_name = file_name.replace(file_ext, "")
+                return file_name + full_type + file_ext
+        
+        return file_name
 
     def get_postfix(self, file_name_no_ext: str):
         # Do not waste time checking for words if it does not have more than 
