@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from configparser import ConfigParser
 from .ffprobe import FFProbe
+from .log import logger
 import hashlib
 import shutil
 import ffmpeg
@@ -119,7 +120,7 @@ def create_directories(file_path: str):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-def get_file_type(file_path: str) -> str:
+def get_file_type(file_path: str, logger: logger) -> str:
     file_type = "unknown"
     file_extension = ""
 
@@ -128,9 +129,7 @@ def get_file_type(file_path: str) -> str:
         file_type = mime.split("/")[0]
         file_extension = mime_types.get(mime, "")
     except:
-        with open("report.txt", "a") as f:
-            print("Unknown MIME type ->", end=" ", file=f)
-        print("Unknown MIME type ->", end=" ")
+        logger.log("! Unknown MIME type -> ", end="")
 
     try:
         if not file_extension:
@@ -144,9 +143,7 @@ def get_file_type(file_path: str) -> str:
             elif file_extension in audio_extensions:
                 file_type = "audio"
     except:
-        with open("report.txt", "a") as f:
-            print("! Unable to get extension type ->", end=" ", file=f)
-        print("! Unable to get extension type ->", end=" ")
+        logger.log("! Unable to get extension type -> ", end="")
 
     return file_type, file_extension
 
@@ -157,7 +154,9 @@ def write_jpg_with_exif(
         input_file_name: str, 
         output_file_name: str, 
         img_datetime: datetime, 
-        img_original_datetime: datetime = None) -> bool:
+        logger: logger,
+        img_original_datetime: datetime = None,
+) -> bool:
     try:
         img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
         offset_str = get_utc_offset(img_datetime)
@@ -175,16 +174,16 @@ def write_jpg_with_exif(
         image.save(output_file_name, exif=exif_bytes)
 
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print("! Error writing jpg metadata:", e, "->", end=" ", file=f)
-        print("! Error writing jpg metadata:", e, "->", end=" ")
+        logger.log(f"! Error writing jpg metadata: {e} -> ", end="")
         return False
     return True
 
 def write_png_with_metadata(
     input_file_name: str,
     output_file_name: str,
-    img_datetime: datetime) -> bool:
+    img_datetime: datetime,
+    logger: logger,
+) -> bool:
     try:
         image = PIL.Image.open(input_file_name)
 
@@ -210,9 +209,7 @@ def write_png_with_metadata(
         image.save(output_file_name, "PNG", pnginfo=metadata)
         image.close()
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print("! Error writing png metadata:", e, "->", end=" ", file=f)
-        print("! Error writing png metadata:", e, "->", end=" ")
+        logger.log(f"! Error writing png metadata: {e} -> ", end="")
         return False
     return True
 
@@ -235,7 +232,9 @@ def write_video_with_metadata(
         input_file_name: str, 
         output_file_name: str, 
         video_date: datetime,
-        config: ConfigParser) -> bool:
+        logger: logger,
+        config: ConfigParser,
+) -> bool:
     try:
         video_datetime_utc = video_date.astimezone(pytz.UTC)
 
@@ -272,9 +271,7 @@ def write_video_with_metadata(
 
             ffmpeg.run(output_stream, overwrite_output=True, quiet=True)
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print("! Error writing video metadata:", e, "->", end=" ", file=f)
-        print("! Error writing video metadata:", e, "->", end=" ")
+        logger.log(f"! Error writing video metadata: {e} -> ", end="")
         return False
     return True
 

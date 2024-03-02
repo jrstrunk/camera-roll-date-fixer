@@ -1,4 +1,3 @@
-from datetime import datetime
 import os
 import time
 from os import listdir
@@ -10,6 +9,7 @@ from src.determine_date import determine_date
 import src.fixer_util as fixer_util
 from src.img_name_gen import ImgNameGen
 import src.duplicates as duplicates
+import src.log as log
 
 config = ConfigParser()
 config.read('config.ini')
@@ -23,6 +23,10 @@ move_dups = config.getboolean("deduplication", "move_duplicate_files")
 only_dedup = config.getboolean("deduplication", "only_dedup")
 
 img_name_gen = ImgNameGen()
+logger = log.logger(config)
+
+fixer_util.create_directories(output_path + "/o")
+fixer_util.create_directories(error_path + "/e")
 
 input_files = []
 if not only_dedup:
@@ -30,23 +34,8 @@ if not only_dedup:
         for f in [f for f in files if not ".json" in f]:
             input_files.append(os.path.join(root, f))
 
-fixer_util.create_directories(output_path + "/o")
-fixer_util.create_directories(error_path + "/e")
-
-if config.getboolean("structure", "continuous_reporting"):
-    open_type = "a"
-else:
-    open_type = "w"
-
-with open("report.txt", open_type) as f:
-    print(
-        datetime.now(), 
-        f"Attemping to fix file times for all files in {input_path} ...", 
-        file=f,
-    )
-print(
-    datetime.now(), 
-    f"Attemping to fix file times for all files in {input_path} ..."
+logger.log_timestamped(
+    f"Attemping to fix file times for all files in {input_path} ...",
 )
 
 if config.getboolean("output", "rename_files"):
@@ -68,9 +57,7 @@ for i, input_file_name in enumerate(input_files):
 
     error_file_name = f"{error_path + rel_file_path}/{file_name}"
     
-    with open("report.txt", "a") as f:
-        print(i, file_name, "->", end=" ", file=f)
-    print(i, file_name, "->", end=" ")
+    logger.log(f"{i} {file_name} -> ", end="")
 
     file_date, original_file_date, write_metadata = determine_date(
         input_file_name, config)
@@ -80,12 +67,13 @@ for i, input_file_name in enumerate(input_files):
     if not file_date:
         fixer_util.create_directories(error_file_name)
         shutil.copy2(input_file_name, error_file_name)
-        with open("report.txt", "a") as f:
-            print("! Date out of bounds, putting in error dir", file=f)
-        print("! Date out of bounds, putting in error dir")
+        logger.log("! Date out of bounds, putting in error dir")
         continue
 
-    file_type, file_extension = fixer_util.get_file_type(input_file_name)
+    file_type, file_extension = fixer_util.get_file_type(
+        input_file_name,
+        logger,
+    )
 
     new_file_name = img_name_gen.gen_file_name(
         file_name, 
@@ -118,14 +106,16 @@ for i, input_file_name in enumerate(input_files):
                 input_file_name, 
                 output_file_name, 
                 file_date, 
+                logger,
                 original_file_date
             )
 
         elif file_extension == "png":
             successful_metadata_write = fixer_util.write_png_with_metadata(
-                input_file_name, 
-                output_file_name, 
-                file_date, 
+                input_file_name,
+                output_file_name,
+                file_date,
+                logger,
             )
 
         elif file_type == "video":
@@ -133,6 +123,7 @@ for i, input_file_name in enumerate(input_files):
                 input_file_name, 
                 output_file_name, 
                 file_date,
+                logger,
                 config,
             )
 
@@ -151,24 +142,23 @@ for i, input_file_name in enumerate(input_files):
     # write that the file was modified when it was taken
     os.utime(output_file_name, (modTime, modTime))
 
-    log_stmt = new_file_name if config.getboolean("output", "rename_files") \
-        else file_date.strftime('%Y-%m-%d %H:%M:%S')
-    with open("report.txt", "a") as f:
-        print(log_stmt, file=f)
-    print(log_stmt)
+    logger.log(
+        new_file_name if config.getboolean("output", "rename_files") \
+            else file_date.strftime('%Y-%m-%d %H:%M:%S'),
+    )
 
     time.sleep(0.01)
 
-with open("report.txt", "a") as f:
-    print(datetime.now(), "Done fixing file times!", file=f)
-print(datetime.now(), "Done fixing file times!")
+logger.log_timestamped("Done fixing file times!")
 
 if report_dups:
+    logger.log_timestamped("Generating duplicate file report ... ")
     dups = duplicates.generate_report(output_path, config)
 
     if dups and move_dups:
+        logger.log_timestamped("Moving duplicate files ... ")
         duplicates.move_older(dups, config)
 
-with open("report.txt", "a") as f:
-    print(datetime.now(), "Done!", end="\n\n", file=f)
-print(datetime.now(), "Done!")
+    logger.log_timestamped("Done!")
+
+logger.log("", end="\n")

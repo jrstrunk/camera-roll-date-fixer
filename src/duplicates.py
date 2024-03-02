@@ -40,8 +40,6 @@ def __generate_image_hash(file_path: str):
         
         return img_hash
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print(f"An error occurred while generating an image hash: {str(e)}", file=f)
         print(f"An error occurred while generating an image hash: {str(e)}")
         return None
 
@@ -63,8 +61,6 @@ def __generate_video_shape(file_path: str):
 
         return video_shape
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print(f"An error occurred while generating a video shape: {str(e)}", file=f)
         print(f"An error occurred while generating a video shape: {str(e)}")
         return None
 
@@ -96,8 +92,6 @@ def __generate_video_hash(file_path: str):
 
         return video_hash_value
     except Exception as e:
-        with open("report.txt", "a") as f:
-            print(f"An error occurred while generating a video hash: {str(e)}", file=f)
         print(f"An error occurred while generating a video hash: {str(e)}")
         return None
 
@@ -181,7 +175,6 @@ def __find_duplicate_files(*paths, heavy=True):
     return duplicate_images + duplicate_videos
 
 def generate_report(start_path, config: ConfigParser):
-    print(datetime.now(), "Generating duplicate file report ... ")
     heavy = config.get("deduplication", "heavy_duplicate_file_checking")
     dups = __find_duplicate_files(start_path, heavy=heavy)
     with open("duplicates.txt", "w") as fi:
@@ -191,9 +184,6 @@ def generate_report(start_path, config: ConfigParser):
     return dups
 
 def move_older(duplicate_tuples: list, config: ConfigParser):
-    with open("report.txt", "a") as f:
-        print(datetime.now(), "Moving duplicate files ... ", file=f)
-    print(datetime.now(), "Moving duplicate files ... ")
     dest_dir = config.get("deduplication", "duplicate_path")
     preferred_keyword = config.get("deduplication", "preferred_keyword_in_dups")
     unpreferred_keyword = config.get("deduplication", "unpreferred_keyword_in_dups")
