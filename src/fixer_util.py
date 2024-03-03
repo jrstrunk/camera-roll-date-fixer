@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from configparser import ConfigParser
 from .ffprobe import FFProbe
 from .log import logger
@@ -99,12 +99,13 @@ def is_within_years(dt: datetime, config: ConfigParser):
     try:
         earliest_year = int(earliest_year)
     except:
-        earliest_year = None
+        earliest_year = 1826
 
     try:
         latest_year = int(latest_year)
     except:
-        latest_year = None
+        # get the year of tomorrow+1 in case the photo was taken in a later tz
+        latest_year = (datetime.now() + timedelta(days=2)).year
 
     if (earliest_year and dt.year < earliest_year):
         return False
