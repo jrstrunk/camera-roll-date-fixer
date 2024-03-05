@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 from os import listdir
 from os.path import isfile, join
@@ -11,8 +12,9 @@ from src.img_name_gen import ImgNameGen
 import src.duplicates as duplicates
 import src.log as log
 
+config_path = sys.argv[1] if len(sys.argv) == 2 else "config.ini"
 config = ConfigParser()
-config.read('config.ini')
+config.read(config_path)
 
 input_path = config.get("structure", "input_path")
 output_path = config.get("structure", "output_path")
