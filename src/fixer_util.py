@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 from configparser import ConfigParser
 from .ffprobe import FFProbe
-from .log import logger
+from .log import Logger
 import hashlib
 import shutil
 import ffmpeg
@@ -121,7 +121,7 @@ def create_directories(file_path: str):
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
-def get_file_type(file_path: str, logger: logger) -> str:
+def get_file_type(file_path: str, logger: Logger) -> str:
     file_type = "unknown"
     file_extension = ""
 
@@ -155,7 +155,7 @@ def write_jpg_with_exif(
         input_file_name: str, 
         output_file_name: str, 
         img_datetime: datetime, 
-        logger: logger,
+        logger: Logger,
         img_original_datetime: datetime = None,
 ) -> bool:
     try:
@@ -183,7 +183,7 @@ def write_png_with_metadata(
     input_file_name: str,
     output_file_name: str,
     img_datetime: datetime,
-    logger: logger,
+    logger: Logger,
 ) -> bool:
     try:
         image = PIL.Image.open(input_file_name)
@@ -233,7 +233,7 @@ def write_video_with_metadata(
         input_file_name: str, 
         output_file_name: str, 
         video_date: datetime,
-        logger: logger,
+        logger: Logger,
         config: ConfigParser,
 ) -> bool:
     try:

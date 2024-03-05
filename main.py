@@ -6,11 +6,11 @@ from os.path import isfile, join
 import shutil
 import ffmpeg
 from configparser import ConfigParser
-from src.determine_date import determine_date
-import src.fixer_util as fixer_util
-from src.img_name_gen import ImgNameGen
-import src.duplicates as duplicates
-import src.log as log
+from .src.determine_date import determine_date
+from .src.fixer_util import *
+from .src.img_name_gen import ImgNameGen
+from .src.duplicates import *
+from .src.log import Logger
 
 def main(config_path: str):
     config = ConfigParser()
@@ -25,10 +25,10 @@ def main(config_path: str):
     only_dedup = config.getboolean("deduplication", "only_dedup")
 
     img_name_gen = ImgNameGen()
-    logger = log.logger(config)
+    logger = Logger(config)
 
-    fixer_util.create_directories(output_path + "/o")
-    fixer_util.create_directories(error_path + "/e")
+    create_directories(output_path + "/o")
+    create_directories(error_path + "/e")
 
     input_files = []
     if not only_dedup:
@@ -67,12 +67,12 @@ def main(config_path: str):
         # if the parsed date is not valid, write the file to the error path and
         # continue to the next
         if not file_date:
-            fixer_util.create_directories(error_file_name)
+            create_directories(error_file_name)
             shutil.copy2(input_file_name, error_file_name)
             logger.log("! Date out of bounds, putting in error dir")
             continue
 
-        file_type, file_extension = fixer_util.get_file_type(
+        file_type, file_extension = get_file_type(
             input_file_name,
             logger,
         )
@@ -93,7 +93,7 @@ def main(config_path: str):
         else:
             output_file_name = f"{output_path}{rel_file_path}/{new_file_name}"
 
-        fixer_util.create_directories(output_file_name)
+        create_directories(output_file_name)
 
         # write the date to the exif data if it is a jpg file and the date did not
         # originally come from the exif data
@@ -104,7 +104,7 @@ def main(config_path: str):
         successful_metadata_write = False
         if write_metadata:
             if file_extension == "jpg":
-                successful_metadata_write = fixer_util.write_jpg_with_exif(
+                successful_metadata_write = write_jpg_with_exif(
                     input_file_name, 
                     output_file_name, 
                     file_date, 
@@ -113,7 +113,7 @@ def main(config_path: str):
                 )
 
             elif file_extension == "png":
-                successful_metadata_write = fixer_util.write_png_with_metadata(
+                successful_metadata_write = write_png_with_metadata(
                     input_file_name,
                     output_file_name,
                     file_date,
@@ -121,7 +121,7 @@ def main(config_path: str):
                 )
 
             elif file_type == "video":
-                successful_metadata_write = fixer_util.write_video_with_metadata(
+                successful_metadata_write = write_video_with_metadata(
                     input_file_name, 
                     output_file_name, 
                     file_date,
@@ -131,7 +131,7 @@ def main(config_path: str):
 
             if config.getboolean("output", "write_sidecar_for_unsupported_types") \
                     and not successful_metadata_write:
-                fixer_util.write_sidecar(output_file_name, file_date)
+                write_sidecar(output_file_name, file_date)
 
         # copy the file to the output file if a new file was not 
         # written with metadata 
@@ -155,11 +155,11 @@ def main(config_path: str):
 
     if report_dups:
         logger.log_timestamped("Generating duplicate file report ... ")
-        dups = duplicates.generate_report(output_path, config)
+        dups = generate_report(output_path, config)
 
         if dups and move_dups:
             logger.log_timestamped("Moving duplicate files ... ")
-            duplicates.move_older(dups, config)
+            move_older(dups, config)
 
         logger.log_timestamped("Done!")
 

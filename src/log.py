@@ -1,7 +1,7 @@
 from configparser import ConfigParser
 from datetime import datetime
 
-class logger:
+class Logger:
     filename = "report.txt"
 
     def __init__(self, config: ConfigParser):

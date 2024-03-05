@@ -1,3 +1,4 @@
+import os, sys
 import re
 __custom_words_to_preserve = [
     "strunk",
@@ -28,7 +29,10 @@ words_to_not_preserve = [
     "image",
 ]
 
-with open('resources/words.txt') as word_file:
+words_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) \
+    + '/resources/words.txt'
+
+with open(words_path, "r") as word_file:
     valid_words = set(word_file.read().split())
 
 words_to_preserve = [
