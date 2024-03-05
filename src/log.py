@@ -12,7 +12,7 @@ class logger:
         if not config.getboolean("structure", "continuous_reporting"):
             self.wipe_log()
 
-    def wipe_log(self, text: str):
+    def wipe_log(self):
         with open(self.filename, "w") as f:
             print("", end="", file=f)
 
