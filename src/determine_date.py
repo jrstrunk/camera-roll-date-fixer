@@ -179,6 +179,8 @@ def from_video_metadata(file_name: str):
     return None, False
 
 def from_file_name(file_name: str, config: ConfigParser):
+    file_name = ".".join(file_name.split(".")[0:-1]) # remove the extension
+
     possible_date_formats = []
 
     delimiters = ["", " ", "-", "_", ".", " AT ", " at "]
@@ -187,7 +189,7 @@ def from_file_name(file_name: str, config: ConfigParser):
     # before the appropiate period has had a chance to
     periods = [" AM", " PM", " am", " pm", "AM", "PM", "am", "pm", ""]
 
-    # generate regex and datetime format str for each possible date format that
+    # generate regex and datetime format for each possible date format that
     # has the same sub delimiter for each block, eg. "2024-01-21 09.36.10"
     date_format_quadruple_tuples = \
         itertools.product(sub_delimiters, delimiters, sub_delimiters, periods)
@@ -203,18 +205,18 @@ def from_file_name(file_name: str, config: ConfigParser):
             hour_code = "%I"
             period_code = "%p"
 
-        # account for all digit date
+        # account for an all digit date
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
         })
-        # account for date with short month name
+        # account for a date with short month name
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\d{sub_delim2}\\d\\d{sub_delim2}\\d\\d{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%b{sub_delim1}%d{delim}{hour_code}{sub_delim2}%M{sub_delim2}%S{period_code}",
         })
 
-    # generate regex and datetime format str for each possible date format that
+    # generate regex and datetime format for each possible date format that
     # has the h,m,s delimiters for the time block
     date_format_triple_tuples = \
         itertools.product(sub_delimiters, delimiters, periods)
@@ -230,28 +232,46 @@ def from_file_name(file_name: str, config: ConfigParser):
             hour_code = "%I"
             period_code = "%p"
 
-        # account for all digit date
+        # account for an all digit date
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
         })
-        # account for date with short month name
+        # account for a date with short month name
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d{delim}\\d\\dh\\d\\dm\\d\\ds{period}".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%d{sub_delim1}%d{delim}{hour_code}h%Mm%Ss{period_code}",
         })
 
-    # generate regex and datetime format str for each possible date format that
-    # only has the date, eg. "2011.08.24"
+    # Generate the regex and datetime format for each possible date format that
+    # only has the date, eg. "2011.08.24". Since the all digits version (not
+    # the short month name version) is so few digits to match, this can result 
+    # in a lot of false positives. To reduce the chance of a false positive, 
+    # this only allows for the all digit date to match at the very beginning 
+    # or end of the file name and enforces that the characters  right after 
+    # or before it are word boundaries
     date_format_singles = sub_delimiters
 
     for sub_delim1 in date_format_singles:
-        # account for all digit date
+        # account for an all digit date at the beginning of the file name
         possible_date_formats.append({
-            "regex": f"\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d".replace(".", "\\."),
+            "regex": f"^\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d\\b".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%m{sub_delim1}%d",
         })
-        # account for date with short month name
+        possible_date_formats.append({
+            "regex": f"^\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d_".replace(".", "\\."), # underscore is not a word boundry but we want to allow it
+            "format": f"%Y{sub_delim1}%m{sub_delim1}%d_",
+        })
+        # account for an all digit date at the end of the file name
+        possible_date_formats.append({
+            "regex": f"\\b\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d$".replace(".", "\\."),
+            "format": f"%Y{sub_delim1}%m{sub_delim1}%d",
+        })
+        possible_date_formats.append({
+            "regex": f"_\\d\\d\\d\\d{sub_delim1}\\d\\d{sub_delim1}\\d\\d$".replace(".", "\\."),  # underscore is not a word boundry but we want to allow it
+            "format": f"_%Y{sub_delim1}%m{sub_delim1}%d",
+        })
+        # account for a date with short month name
         possible_date_formats.append({
             "regex": f"\\d\\d\\d\\d{sub_delim1}[A-Za-z][A-Za-z][A-Za-z]{sub_delim1}\\d\\d".replace(".", "\\."),
             "format": f"%Y{sub_delim1}%b{sub_delim1}%d",
