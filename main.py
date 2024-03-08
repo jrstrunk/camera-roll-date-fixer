@@ -10,7 +10,7 @@ from src.determine_date import determine_date
 import src.fixer_util as fixer_util
 from src.img_name_gen import ImgNameGen
 import src.duplicates as duplicates
-import src.log as log
+from src.log import Logger
 
 def main(config_path: str):
     config = ConfigParser()
@@ -25,7 +25,7 @@ def main(config_path: str):
     only_dedup = config.getboolean("deduplication", "only_dedup")
 
     img_name_gen = ImgNameGen()
-    logger = log.logger(config)
+    logger = Logger(config)
 
     fixer_util.create_directories(output_path + "/o")
     fixer_util.create_directories(error_path + "/e")
