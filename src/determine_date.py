@@ -11,7 +11,7 @@ import re
 import itertools
 import json
 import pytz
-from .fixer_util import *
+import src.fixer_util as fixer_util
 from dateutil import parser
 from .ffprobe import FFProbe
 
@@ -65,7 +65,7 @@ def from_metadata(file_name: str, config: ConfigParser):
     if not got_date:
         file_date, got_date = from_video_metadata(file_name)
 
-    if is_within_years(file_date, config):
+    if fixer_util.is_within_years(file_date, config):
         return file_date, got_date
 
     return None, False
@@ -282,7 +282,7 @@ def from_file_name(file_name: str, config: ConfigParser):
         for match in matches:
             try:
                 file_date = datetime.strptime(match, date_format["format"])
-                if is_within_years(file_date, config):
+                if fixer_util.is_within_years(file_date, config):
                     return file_date
 
             # if this throws an error, then the "date" being parsed was not 
@@ -341,7 +341,7 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
 
     if data:
         file_date = parser.parse(data["photoTakenTime"]["formatted"])
-        if is_within_years(file_date, config):
+        if fixer_util.is_within_years(file_date, config):
             return file_date
 
     return None
