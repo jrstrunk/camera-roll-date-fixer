@@ -95,6 +95,8 @@ def main(config_path: str):
 
         fixer_util.create_directories(output_file_name)
 
+        write_sidecar = False
+
         # write the date to the exif data if it is a jpg file and the date did not
         # originally come from the exif data
         if config.getboolean("output", "override_png_metadata") \
@@ -121,6 +123,9 @@ def main(config_path: str):
                 )
 
             elif file_type == "video":
+                # Write to a sidecar for video files since most video file 
+                # containers do not support time offset
+                write_sidecar = True
                 successful_metadata_write = fixer_util.write_video_with_metadata(
                     input_file_name, 
                     output_file_name, 
@@ -129,8 +134,11 @@ def main(config_path: str):
                     config,
                 )
 
-            if config.getboolean("output", "write_sidecar_for_unsupported_types") \
-                    and not successful_metadata_write:
+            if not successful_metadata_write:
+                write_sidecar = True
+
+        if config.getboolean("output", "write_sidecar_for_unsupported_types") \
+                    and write_sidecar:
                 fixer_util.write_sidecar(output_file_name, file_date)
 
         # copy the file to the output file if a new file was not 
