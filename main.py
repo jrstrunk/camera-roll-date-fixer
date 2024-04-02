@@ -123,9 +123,6 @@ def main(config_path: str):
                 )
 
             elif file_type == "video":
-                # Write to a sidecar for video files since most video file 
-                # containers do not support time offset
-                write_sidecar = True
                 successful_metadata_write = fixer_util.write_video_with_metadata(
                     input_file_name, 
                     output_file_name, 
@@ -136,6 +133,11 @@ def main(config_path: str):
 
             if not successful_metadata_write:
                 write_sidecar = True
+
+        if file_type == "video":
+            # Write to a sidecar for video files since most video file 
+            # containers do not support time offset
+            write_sidecar = True
 
         if config.getboolean("output", "write_sidecar_for_unsupported_types") \
                     and write_sidecar:
