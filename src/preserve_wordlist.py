@@ -1,4 +1,3 @@
-import re
 __custom_words_to_preserve = [
     "strunk",
     "websize",

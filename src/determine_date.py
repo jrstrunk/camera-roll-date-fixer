@@ -1,11 +1,8 @@
 import exif
 import PIL
-from datetime import datetime, timedelta
+from datetime import datetime
 from configparser import ConfigParser
 import os
-import time
-from os import listdir
-from os.path import isfile, join
 import json
 import re
 import itertools
@@ -139,7 +136,7 @@ def from_photo_metadata(file_name: str):
 
                 try:
                     for offsetTag in ["Offset Time", "OffsetTime", "OffsetTimeOriginal", "OffsetTimeDigitized"]:
-                        if img.info.get(effsetTag):
+                        if img.info.get(offsetTag):
                             offset_minutes = int(img.info["Offset Time"][:3]) \
                                 * 60 + int(img.info["Offset Time"][4:])
                             offset_tz = pytz.FixedOffset(offset_minutes)

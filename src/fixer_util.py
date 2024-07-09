@@ -3,16 +3,12 @@ from datetime import datetime, timedelta
 from configparser import ConfigParser
 from .ffprobe import FFProbe
 from .log import Logger
-import hashlib
-import shutil
 import ffmpeg
-import exif
 import piexif
 import pytz
 import PIL
 import magic
 import tempfile
-import json
 
 video_extensions = [
     "mp4", 
@@ -134,7 +130,7 @@ def get_file_type(file_path: str, logger: Logger) -> str:
 
     try:
         if not file_extension:
-            file_extension = file_name.split(".")[-1]
+            file_extension = file_path.split(".")[-1]
 
         if file_type == "unknown":
             if file_extension in image_extensions:

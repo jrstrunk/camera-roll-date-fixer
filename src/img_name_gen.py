@@ -1,12 +1,10 @@
 import re
 from datetime import datetime
 from configparser import ConfigParser
-import exif
 import random
 import re
 import string
 from .preserve_wordlist import larger_words_to_preserve, words_to_not_preserve
-from . import fixer_util 
 
 class ImgNameGen:
     def __init__(self):

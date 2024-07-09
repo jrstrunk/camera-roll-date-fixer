@@ -1,10 +1,7 @@
 import os
 import sys
 import time
-from os import listdir
-from os.path import isfile, join
 import shutil
-import ffmpeg
 from configparser import ConfigParser
 from src.determine_date import determine_date
 import src.fixer_util as fixer_util
