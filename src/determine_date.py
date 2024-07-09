@@ -132,13 +132,13 @@ def from_photo_metadata(file_name: str):
         for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "DateTimeDigitized"]:
             img = PIL.Image.open(file_name)
             if img.info.get(datetimeTag):
-                img_date = datetime.strptime(img.info["Creation Time"], "%Y:%m:%d %H:%M:%S")
+                img_date = datetime.strptime(img.info[datetimeTag], "%Y:%m:%d %H:%M:%S")
 
                 try:
                     for offsetTag in ["Offset Time", "OffsetTime", "OffsetTimeOriginal", "OffsetTimeDigitized"]:
                         if img.info.get(offsetTag):
-                            offset_minutes = int(img.info["Offset Time"][:3]) \
-                                * 60 + int(img.info["Offset Time"][4:])
+                            offset_minutes = int(img.info[offsetTag][:3]) \
+                                * 60 + int(img.info[offsetTag][4:])
                             offset_tz = pytz.FixedOffset(offset_minutes)
                             img_date = img_date.replace(tzinfo=offset_tz)
                             break
