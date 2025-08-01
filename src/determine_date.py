@@ -140,7 +140,7 @@ def from_photo_metadata(file_name: str):
 
     # png file handling
     try:
-        for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "Create Date", "DateTimeDigitized",  0x0132, 0x9003]:
+        for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "DateTimeDigitized",  0x0132, 0x9003]:
             img = PIL.Image.open(file_name)
 
             if img.info.get(datetimeTag):
@@ -158,6 +158,73 @@ def from_photo_metadata(file_name: str):
                     pass
 
                 return img_date, True
+    except:
+        pass
+
+    # heif file handling
+    try:
+        img = PIL.Image.open(file_name)
+
+        # Try to get EXIF data
+        if hasattr(img, 'getexif'):
+            exif_data = img.getexif()
+
+            # Common EXIF tags for date/time
+            datetime_tags = {
+                0x0132: 'DateTime',           # DateTime
+                0x9003: 'DateTimeOriginal',   # DateTimeOriginal
+                0x9004: 'DateTimeDigitized'   # DateTimeDigitized
+            }
+
+            # Try to find a datetime value
+            for tag_id, tag_name in datetime_tags.items():
+                if tag_id in exif_data:
+                    try:
+                        datetime_str = exif_data[tag_id]
+                        img_date = datetime.strptime(datetime_str, "%Y:%m:%d %H:%M:%S")
+
+                        # Try to find corresponding offset
+                        offset_tag_id = None
+                        if tag_id == 0x0132:  # DateTime
+                            offset_tag_id = 0x9010  # OffsetTime
+                        elif tag_id == 0x9003:  # DateTimeOriginal
+                            offset_tag_id = 0x9011  # OffsetTimeOriginal
+                        elif tag_id == 0x9004:  # DateTimeDigitized
+                            offset_tag_id = 0x9012  # OffsetTimeDigitized
+
+                        if offset_tag_id and offset_tag_id in exif_data:
+                            try:
+                                offset_str = exif_data[offset_tag_id]
+                                offset_minutes = int(offset_str[:3]) * 60 + int(offset_str[4:])
+                                offset_tz = pytz.FixedOffset(offset_minutes)
+                                img_date = img_date.replace(tzinfo=offset_tz)
+                            except:
+                                pass
+
+                        return img_date, True
+                    except:
+                        continue
+
+        # Fallback: try to get from img.info
+        for datetimeTag in ["DateTime", "DateTimeOriginal", "Create Date", "DateTimeDigitized"]:
+            if img.info.get(datetimeTag):
+                try:
+                    img_date = datetime.strptime(img.info[datetimeTag], "%Y:%m:%d %H:%M:%S")
+
+                    for offsetTag in ["OffsetTime", "OffsetTimeOriginal", "OffsetTimeDigitized"]:
+                        if img.info.get(offsetTag):
+                            try:
+                                offset_minutes = int(img.info[offsetTag][:3]) * 60 + int(img.info[offsetTag][4:])
+                                offset_tz = pytz.FixedOffset(offset_minutes)
+                                img_date = img_date.replace(tzinfo=offset_tz)
+                                break
+                            except:
+                                pass
+
+                    return img_date, True
+                except:
+                    continue
+
     except:
         pass
 
