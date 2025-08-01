@@ -12,6 +12,13 @@ import src.fixer_util as fixer_util
 from dateutil import parser
 from .ffprobe import FFProbe
 
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    HEIF_SUPPORT = True
+except ImportError:
+    HEIF_SUPPORT = False
+
 def determine_date(file_name: str, config: ConfigParser):
     use_sys_date = config.getboolean("parsing", "get_date_from_sys_file_times")
     use_json_date = config.getboolean("parsing", "get_date_from_json_file")
@@ -38,10 +45,10 @@ def determine_date(file_name: str, config: ConfigParser):
 
     if not file_date and use_sys_date:
         file_date = from_sys_file_times(file_name, config)
-    
+
     local_timezone = pytz.timezone(config.get("parsing", "local_timezone"))
 
-    # if we got a naive date time from the file, assume it is local 
+    # if we got a naive date time from the file, assume it is local
     # time, otherwise convert it to local time
     if file_date:
         if not file_date.tzinfo:
@@ -86,7 +93,7 @@ def from_photo_metadata(file_name: str):
                         img_date = img_date.replace(tzinfo=offset_tz)
                 except:
                     pass
-                    
+
                 return img_date, True
         except:
             pass
@@ -127,10 +134,15 @@ def from_photo_metadata(file_name: str):
     except:
         pass
 
+    # Check if this is a HEIF file
+    if file_name.lower().endswith(('.heif', '.heic')):
+        return from_heif_metadata(file_name)
+
     # png file handling
     try:
-        for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "DateTimeDigitized"]:
+        for datetimeTag in ["Creation Time", "CreationTime", "DateTime", "DateTimeOriginal", "Create Date", "DateTimeDigitized",  0x0132, 0x9003]:
             img = PIL.Image.open(file_name)
+
             if img.info.get(datetimeTag):
                 img_date = datetime.strptime(img.info[datetimeTag], "%Y:%m:%d %H:%M:%S")
 
@@ -148,6 +160,79 @@ def from_photo_metadata(file_name: str):
                 return img_date, True
     except:
         pass
+
+    return None, False
+
+def from_heif_metadata(file_name: str):
+    """Extract datetime from HEIF/HEIC files using pillow-heif"""
+    if not HEIF_SUPPORT:
+        print(f"Warning: pillow-heif not installed, cannot read HEIF metadata from {file_name}")
+        return None, False
+    try:
+        img = PIL.Image.open(file_name)
+
+        # Try to get EXIF data
+        if hasattr(img, 'getexif'):
+            exif_data = img.getexif()
+
+            # Common EXIF tags for date/time
+            datetime_tags = {
+                0x0132: 'DateTime',           # DateTime
+                0x9003: 'DateTimeOriginal',   # DateTimeOriginal
+                0x9004: 'DateTimeDigitized'   # DateTimeDigitized
+            }
+
+            # Try to find a datetime value
+            for tag_id, tag_name in datetime_tags.items():
+                if tag_id in exif_data:
+                    try:
+                        datetime_str = exif_data[tag_id]
+                        img_date = datetime.strptime(datetime_str, "%Y:%m:%d %H:%M:%S")
+
+                        # Try to find corresponding offset
+                        offset_tag_id = None
+                        if tag_id == 0x0132:  # DateTime
+                            offset_tag_id = 0x9010  # OffsetTime
+                        elif tag_id == 0x9003:  # DateTimeOriginal
+                            offset_tag_id = 0x9011  # OffsetTimeOriginal
+                        elif tag_id == 0x9004:  # DateTimeDigitized
+                            offset_tag_id = 0x9012  # OffsetTimeDigitized
+
+                        if offset_tag_id and offset_tag_id in exif_data:
+                            try:
+                                offset_str = exif_data[offset_tag_id]
+                                offset_minutes = int(offset_str[:3]) * 60 + int(offset_str[4:])
+                                offset_tz = pytz.FixedOffset(offset_minutes)
+                                img_date = img_date.replace(tzinfo=offset_tz)
+                            except:
+                                pass
+
+                        return img_date, True
+                    except:
+                        continue
+
+        # Fallback: try to get from img.info
+        for datetimeTag in ["DateTime", "DateTimeOriginal", "Create Date", "DateTimeDigitized"]:
+            if img.info.get(datetimeTag):
+                try:
+                    img_date = datetime.strptime(img.info[datetimeTag], "%Y:%m:%d %H:%M:%S")
+
+                    for offsetTag in ["OffsetTime", "OffsetTimeOriginal", "OffsetTimeDigitized"]:
+                        if img.info.get(offsetTag):
+                            try:
+                                offset_minutes = int(img.info[offsetTag][:3]) * 60 + int(img.info[offsetTag][4:])
+                                offset_tz = pytz.FixedOffset(offset_minutes)
+                                img_date = img_date.replace(tzinfo=offset_tz)
+                                break
+                            except:
+                                pass
+
+                    return img_date, True
+                except:
+                    continue
+
+    except Exception as e:
+        print(f"Error reading HEIF metadata from {file_name}: {e}")
 
     return None, False
 
@@ -242,10 +327,10 @@ def from_file_name(file_name: str, config: ConfigParser):
 
     # Generate the regex and datetime format for each possible date format that
     # only has the date, eg. "2011.08.24". Since the all digits version (not
-    # the short month name version) is so few digits to match, this can result 
-    # in a lot of false positives. To reduce the chance of a false positive, 
-    # this only allows for the all digit date to match at the very beginning 
-    # or end of the file name and enforces that the characters  right after 
+    # the short month name version) is so few digits to match, this can result
+    # in a lot of false positives. To reduce the chance of a false positive,
+    # this only allows for the all digit date to match at the very beginning
+    # or end of the file name and enforces that the characters  right after
     # or before it are word boundaries
     date_format_singles = sub_delimiters
 
@@ -282,7 +367,7 @@ def from_file_name(file_name: str, config: ConfigParser):
                 if fixer_util.is_within_years(file_date, config):
                     return file_date
 
-            # if this throws an error, then the "date" being parsed was not 
+            # if this throws an error, then the "date" being parsed was not
             # a valid date, so continue in the loop
             except:
                 pass
@@ -301,13 +386,13 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
             file_path_split[-1] = file_path_split[-1][0:46]
             short_file_name = "/".join(file_path_split)
 
-            # check for a straight conversion from the file name to 
+            # check for a straight conversion from the file name to
             # the json file
             if os.path.isfile(f"{short_file_name}.json"):
                 with open(f"{short_file_name}.json") as f:
                     return json.load(f)
 
-            # translating a file with a filename duplicate number at the 
+            # translating a file with a filename duplicate number at the
             # end is not straigtforward, "hi(2).jpg" -> "hi.jpg(2).json
             for num in range(5):
                 minus_num_file_name = \
@@ -317,14 +402,14 @@ def from_gphotos_json(file_name: str, config: ConfigParser):
                     with open(minus_num_file_name) as f:
                         return json.load(f)
 
-            # google photos names the json files a little differently than the 
+            # google photos names the json files a little differently than the
             # actual file when there was an edit
             minus_edited_file_name = file_name.replace('-edited', '') + ".json"
             if "-edited" in file_name and os.path.isfile(minus_edited_file_name):
                 with open(minus_edited_file_name) as f:
                     return json.load(f)
 
-            # in some cases the file extension is just left out of the json 
+            # in some cases the file extension is just left out of the json
             # file name, like "de.jpg_large.jpg" -> "de.jpg_large.json"
             minus_ext_file_name = ".".join(file_name.split(".")[0:-1]) + ".json"
             if os.path.isfile(minus_ext_file_name):

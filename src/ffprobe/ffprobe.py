@@ -4,7 +4,6 @@ Python wrapper for ffprobe command line tool. ffprobe must exist in the path.
 import functools
 import operator
 import os
-import pipes
 import platform
 import re
 import subprocess
@@ -31,7 +30,7 @@ class FFProbe:
             if platform.system() == "Windows":
                 cmd = ["ffprobe", "-show_streams", self.path_to_video]
             else:
-                cmd = ["ffprobe -show_streams " + pipes.quote(self.path_to_video)]
+                cmd = ["ffprobe -show_streams " + '"' + self.path_to_video + '"']
 
             p = subprocess.Popen(
                 cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
