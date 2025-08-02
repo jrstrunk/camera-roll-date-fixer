@@ -11,21 +11,21 @@ import magic
 import tempfile
 
 video_extensions = [
-    "mp4", 
-    "avi", 
-    "mkv", 
-    "mov", 
-    "webm", 
-    "m4v", 
-    "3gp", 
+    "mp4",
+    "avi",
+    "mkv",
+    "mov",
+    "webm",
+    "m4v",
+    "3gp",
     "mpeg",
     "mp",
     "ogv",
 ]
 
 image_extensions = [
-    "jpg", 
-    "jpeg", 
+    "jpg",
+    "jpeg",
     "jpe",
     "jif",
     "jfif",
@@ -36,21 +36,21 @@ image_extensions = [
     "jpx",
     "jpm",
     "mj2",
-    "png", 
-    "webp", 
-    "gif", 
-    "tiff", 
-    "tif", 
-    "psd", 
-    "raw", 
-    "arw", 
-    "cr2", 
-    "nrw", 
-    "k25", 
-    "bmp", 
-    "dib", 
-    "heif", 
-    "heic", 
+    "png",
+    "webp",
+    "gif",
+    "tiff",
+    "tif",
+    "psd",
+    "raw",
+    "arw",
+    "cr2",
+    "nrw",
+    "k25",
+    "bmp",
+    "dib",
+    "heif",
+    "heic",
     "ind",
     "indd",
     "indt",
@@ -86,7 +86,7 @@ mime_types = {
 }
 
 def is_within_years(dt: datetime, config: ConfigParser):
-    if not dt: 
+    if not dt:
         return False
 
     earliest_year = config.get("parsing", "earliest_year")
@@ -113,7 +113,7 @@ def is_within_years(dt: datetime, config: ConfigParser):
 
 def create_directories(file_path: str):
     dir_path = os.path.dirname(file_path)
-    
+
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
 
@@ -148,11 +148,11 @@ def get_utc_offset(localized_datetime: datetime) -> str:
     return localized_datetime.isoformat()[-6:]
 
 def write_jpg_with_exif(
-        input_file_name: str, 
-        output_file_name: str, 
-        img_datetime: datetime, 
+        input_file_name: str,
+        output_file_name: str,
+        img_datetime: datetime,
         logger: Logger,
-        img_original_datetime: datetime = None,
+        img_original_datetime: datetime | None = None,
 ) -> bool:
     try:
         img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
@@ -163,7 +163,7 @@ def write_jpg_with_exif(
             exif_dict = piexif.load(image.info['exif'])
         else:
             exif_dict = {"Exif":{}}
-        
+
         exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = img_datetime_str.encode()
         exif_dict['Exif'][piexif.ExifIFD.OffsetTimeOriginal] = offset_str.encode()
 
@@ -197,12 +197,12 @@ def write_png_with_metadata(
             else:
                 val = image.info[key]
             metadata.add_text(key, val)
-        
+
         img_datetime_str = img_datetime.strftime('%Y:%m:%d %H:%M:%S')
         img_offset_str = get_utc_offset(img_datetime)
         metadata.add_text("DateTime", img_datetime_str)
         metadata.add_text("OffsetTime", img_offset_str)
-        
+
         image.save(output_file_name, "PNG", pnginfo=metadata)
         image.close()
     except Exception as e:
@@ -226,8 +226,8 @@ def get_video_comment(file_name: str):
     return ""
 
 def write_video_with_metadata(
-        input_file_name: str, 
-        output_file_name: str, 
+        input_file_name: str,
+        output_file_name: str,
         video_date: datetime,
         logger: Logger,
         config: ConfigParser,

@@ -2,6 +2,8 @@ import os
 import sys
 import time
 import shutil
+import csv
+import glob
 from configparser import ConfigParser
 from src.determine_date import determine_date
 import src.fixer_util as fixer_util
@@ -26,6 +28,9 @@ def main(config_path: str):
 
     fixer_util.create_directories(output_path + "/o")
     fixer_util.create_directories(error_path + "/e")
+
+    # Parse Photo Details CSV files before processing images
+    photo_details_dict = parse_photo_details_csv(input_path, logger)
 
     input_files = []
     if not only_dedup:
@@ -55,11 +60,11 @@ def main(config_path: str):
                 rel_file_path = "/" + split_name[0]
 
         error_file_name = f"{error_path + rel_file_path}/{file_name}"
-        
+
         logger.log(f"{i} {file_name} -> ", end="")
 
         file_date, original_file_date, write_metadata = determine_date(
-            input_file_name, config)
+            input_file_name, config, photo_details_dict)
 
         # if the parsed date is not valid, write the file to the error path and
         # continue to the next
@@ -75,10 +80,10 @@ def main(config_path: str):
         )
 
         new_file_name = img_name_gen.gen_file_name(
-            file_name, 
-            file_type, 
-            file_extension, 
-            file_date, 
+            file_name,
+            file_type,
+            file_extension,
+            file_date,
             config,
         )
 
@@ -104,9 +109,9 @@ def main(config_path: str):
         if write_metadata:
             if file_extension == "jpg":
                 successful_metadata_write = fixer_util.write_jpg_with_exif(
-                    input_file_name, 
-                    output_file_name, 
-                    file_date, 
+                    input_file_name,
+                    output_file_name,
+                    file_date,
                     logger,
                     original_file_date
                 )
@@ -121,8 +126,8 @@ def main(config_path: str):
 
             elif file_type == "video":
                 successful_metadata_write = fixer_util.write_video_with_metadata(
-                    input_file_name, 
-                    output_file_name, 
+                    input_file_name,
+                    output_file_name,
                     file_date,
                     logger,
                     config,
@@ -132,7 +137,7 @@ def main(config_path: str):
                 write_sidecar = True
 
         if file_type == "video":
-            # Write to a sidecar for video files since most video file 
+            # Write to a sidecar for video files since most video file
             # containers do not support time offset
             write_sidecar = True
 
@@ -140,8 +145,8 @@ def main(config_path: str):
                     and write_sidecar:
                 fixer_util.write_sidecar(output_file_name, file_date)
 
-        # copy the file to the output file if a new file was not 
-        # written with metadata 
+        # copy the file to the output file if a new file was not
+        # written with metadata
         if not successful_metadata_write:
             shutil.copy2(input_file_name, output_file_name)
 
@@ -171,6 +176,37 @@ def main(config_path: str):
         logger.log_timestamped("Done!")
 
     logger.log("", end="\n")
+
+def parse_photo_details_csv(input_path: str, logger):
+    """Parse Photo Details CSV files and return a dictionary mapping image names to original creation dates."""
+    photo_details = {}
+
+    # Search for Photo Details*.csv files in the input directory
+    csv_pattern = os.path.join(input_path, "Photo Details*.csv")
+    csv_files = glob.glob(csv_pattern)
+
+    logger.log_timestamped(f"Found {len(csv_files)} Photo Details CSV file(s)")
+
+    for csv_file in csv_files:
+        logger.log(f"Reading CSV file: {os.path.basename(csv_file)}")
+
+        try:
+            with open(csv_file, 'r', encoding='utf-8', newline='') as file:
+                # Use tab as delimiter based on the description
+                reader = csv.DictReader(file)
+
+                for row in reader:
+                    img_name = row.get('imgName', '').strip()
+                    original_creation_date = row.get('originalCreationDate', '').strip()
+
+                    if img_name and original_creation_date:
+                        photo_details[img_name] = original_creation_date
+
+        except Exception as e:
+            logger.log(f"Error reading CSV file {csv_file}: {str(e)}")
+
+    logger.log_timestamped(f"Loaded {len(photo_details)} photo details from CSV files")
+    return photo_details
 
 if __name__ == "__main__":
     config_path = sys.argv[1] if len(sys.argv) == 2 else "config.ini"

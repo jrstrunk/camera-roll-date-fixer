@@ -6,7 +6,6 @@ import os
 import json
 import re
 import itertools
-import json
 import pytz
 import src.fixer_util as fixer_util
 from dateutil import parser
@@ -19,7 +18,7 @@ try:
 except ImportError:
     HEIF_SUPPORT = False
 
-def determine_date(file_name: str, config: ConfigParser):
+def determine_date(file_name: str, config: ConfigParser, photo_details_dict: dict | None = None):
     use_sys_date = config.getboolean("parsing", "get_date_from_sys_file_times")
     use_json_date = config.getboolean("parsing", "get_date_from_json_file")
     use_metadata_date = config.getboolean("parsing", "get_date_from_file_metadata")
@@ -32,7 +31,7 @@ def determine_date(file_name: str, config: ConfigParser):
     file_date = from_user_override(config)
 
     if not file_date and use_json_date:
-        file_date, original_file_date = from_json(file_name, config)
+        file_date, original_file_date = from_json(file_name, config, photo_details_dict)
 
     if not file_date and use_metadata_date:
         file_date, got_date_from_metadata = from_metadata(file_name, config)
@@ -58,7 +57,7 @@ def determine_date(file_name: str, config: ConfigParser):
 
     if original_file_date:
         if not original_file_date.tzinfo:
-            original_file_date = original_file_date.replace(tz_info=local_timezone)
+            original_file_date = original_file_date.replace(tzinfo=local_timezone)
         else:
             original_file_date = original_file_date.astimezone(local_timezone)
 
@@ -441,7 +440,28 @@ def from_file_name(file_name: str, config: ConfigParser):
 
     return None
 
-def from_json(file_name: str, config: ConfigParser):
+def from_json(file_name: str, config: ConfigParser, photo_details_dict: dict | None = None):
+    """Extract date from Photo Details CSV data if available."""
+    if not photo_details_dict:
+        return None, None
+
+    # Extract just the filename from the full path
+    base_filename = os.path.basename(file_name)
+
+    # Look up the filename in the photo details dictionary
+    print("Getting date from JSON", photo_details_dict.get(base_filename))
+    if base_filename in photo_details_dict:
+        original_creation_date_str = photo_details_dict[base_filename]
+
+        try:
+            # Parse the date string - assuming it's in a standard format
+            # Common formats: "2023-12-25 14:30:00", "2023/12/25 14:30:00", etc.
+            file_date = parser.parse(original_creation_date_str)
+            return file_date, file_date
+        except (ValueError, TypeError):
+            # If parsing fails, return None
+            return None, None
+
     return None, None
 
 def from_gphotos_json(file_name: str, config: ConfigParser):
