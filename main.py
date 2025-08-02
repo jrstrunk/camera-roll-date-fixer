@@ -181,9 +181,9 @@ def parse_photo_details_csv(input_path: str, logger):
     """Parse Photo Details CSV sidecar files and return a dictionary mapping image names to original creation dates."""
     photo_details = {}
 
-    # Search for Photo Details*.csv files in the input directory
-    csv_pattern = os.path.join(input_path, "Photo Details*.csv")
-    csv_files = glob.glob(csv_pattern)
+    # Search for Photo Details*.csv files recursively in the input directory and all subdirectories
+    csv_pattern = os.path.join(input_path, "**", "Photo Details*.csv")
+    csv_files = glob.glob(csv_pattern, recursive=True)
 
     logger.log_timestamped(f"Found {len(csv_files)} Photo Details CSV file(s)")
 
