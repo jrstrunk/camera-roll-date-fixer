@@ -453,9 +453,24 @@ def from_sidecar(file_name: str, config: ConfigParser, photo_details_dict: dict 
         original_creation_date_str = photo_details_dict[base_filename]
 
         try:
-            # Parse the date string - assuming it's in a standard format
-            # Common formats: "2023-12-25 14:30:00", "2023/12/25 14:30:00", etc.
-            file_date = parser.parse(original_creation_date_str)
+            # Handle specific problematic format from CSV exports
+            # e.g., "Thursday September 12,2024 4:58 PM GMT"
+            if "," in original_creation_date_str and any(day in original_creation_date_str for day in
+                ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']):
+
+                # Remove the day name and fix comma placement
+                # "Thursday September 12,2024 4:58 PM GMT" -> "September 12 2024 4:58 PM GMT"
+                parts = original_creation_date_str.split()
+                if len(parts) >= 3:
+                    # Remove weekday and fix comma
+                    cleaned_str = " ".join(parts[1:]).replace(",", " ")
+                    file_date = parser.parse(cleaned_str)
+                else:
+                    file_date = parser.parse(original_creation_date_str)
+            else:
+                # Parse standard formats: "2023-12-25 14:30:00", "2023/12/25 14:30:00", etc.
+                file_date = parser.parse(original_creation_date_str)
+
             return file_date, file_date
         except (ValueError, TypeError):
             # If parsing fails, return None
