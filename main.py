@@ -29,7 +29,7 @@ def main(config_path: str):
     fixer_util.create_directories(output_path + "/o")
     fixer_util.create_directories(error_path + "/e")
 
-    # Parse Photo Details CSV files before processing images
+    # Parse Photo Details CSV sidecar files before processing images
     photo_details_dict = parse_photo_details_csv(input_path, logger)
 
     input_files = []
@@ -178,7 +178,7 @@ def main(config_path: str):
     logger.log("", end="\n")
 
 def parse_photo_details_csv(input_path: str, logger):
-    """Parse Photo Details CSV files and return a dictionary mapping image names to original creation dates."""
+    """Parse Photo Details CSV sidecar files and return a dictionary mapping image names to original creation dates."""
     photo_details = {}
 
     # Search for Photo Details*.csv files in the input directory

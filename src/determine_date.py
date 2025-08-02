@@ -20,7 +20,7 @@ except ImportError:
 
 def determine_date(file_name: str, config: ConfigParser, photo_details_dict: dict | None = None):
     use_sys_date = config.getboolean("parsing", "get_date_from_sys_file_times")
-    use_json_date = config.getboolean("parsing", "get_date_from_json_file")
+    use_sidecar_date = config.getboolean("parsing", "get_date_from_sidecar_file")
     use_metadata_date = config.getboolean("parsing", "get_date_from_file_metadata")
     use_gphotos_json_date = config.getboolean("parsing", "get_date_from_gphotos_json_file")
     use_file_name_date = config.getboolean("parsing", "get_date_from_file_name")
@@ -30,8 +30,8 @@ def determine_date(file_name: str, config: ConfigParser, photo_details_dict: dic
     original_file_date = None
     file_date = from_user_override(config)
 
-    if not file_date and use_json_date:
-        file_date, original_file_date = from_json(file_name, config, photo_details_dict)
+    if not file_date and use_sidecar_date:
+        file_date, original_file_date = from_sidecar(file_name, config, photo_details_dict)
 
     if not file_date and use_metadata_date:
         file_date, got_date_from_metadata = from_metadata(file_name, config)
@@ -440,8 +440,8 @@ def from_file_name(file_name: str, config: ConfigParser):
 
     return None
 
-def from_json(file_name: str, config: ConfigParser, photo_details_dict: dict | None = None):
-    """Extract date from Photo Details CSV data if available."""
+def from_sidecar(file_name: str, config: ConfigParser, photo_details_dict: dict | None = None):
+    """Extract date from sidecar files (CSV, JSON, XML) if available."""
     if not photo_details_dict:
         return None, None
 
@@ -449,7 +449,6 @@ def from_json(file_name: str, config: ConfigParser, photo_details_dict: dict | N
     base_filename = os.path.basename(file_name)
 
     # Look up the filename in the photo details dictionary
-    print("Getting date from JSON", photo_details_dict.get(base_filename))
     if base_filename in photo_details_dict:
         original_creation_date_str = photo_details_dict[base_filename]
 
